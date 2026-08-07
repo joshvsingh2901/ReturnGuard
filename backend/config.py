@@ -8,6 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_MODEL_URI = "models:/returnguard-a3@model-of-record"
+DEFAULT_CORS_ORIGINS = ("http://localhost:3000",)
 
 
 def _environment_bool(name: str, default: bool) -> bool:
@@ -21,6 +22,17 @@ def _environment_bool(name: str, default: bool) -> bool:
     raise ValueError(f"{name} must be a boolean value")
 
 
+def _environment_origins(name: str, default: tuple[str, ...]) -> tuple[str, ...]:
+    """Resolve a comma-separated, explicit browser-origin allowlist."""
+    value = os.getenv(name)
+    if value is None:
+        return default
+    origins = tuple(origin.strip() for origin in value.split(",") if origin.strip())
+    if not origins:
+        raise ValueError(f"{name} must contain at least one origin")
+    return origins
+
+
 @dataclass(frozen=True)
 class Settings:
     """Immutable settings resolved once while the process starts."""
@@ -30,6 +42,7 @@ class Settings:
     log_level: str
     max_batch_size: int
     explanations_enabled: bool
+    cors_origins: tuple[str, ...] = DEFAULT_CORS_ORIGINS
 
     @classmethod
     def from_environment(cls) -> "Settings":
@@ -43,4 +56,5 @@ class Settings:
             log_level=os.getenv("RETURNGUARD_LOG_LEVEL", "INFO").upper(),
             max_batch_size=max_batch_size,
             explanations_enabled=_environment_bool("RETURNGUARD_EXPLANATIONS_ENABLED", True),
+            cors_origins=_environment_origins("RETURNGUARD_CORS_ORIGINS", DEFAULT_CORS_ORIGINS),
         )

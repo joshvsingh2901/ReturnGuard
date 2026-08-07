@@ -2,7 +2,7 @@
 
 Predict whether a fashion e-commerce item will be returned.
 
-**Current stage**: Stage 5 FastAPI inference service complete for frozen `returnguard-a3-v1`
+**Current stage**: Stage 6 Next.js frontend complete for frozen `returnguard-a3-v1`
 
 ---
 
@@ -19,7 +19,7 @@ The project is built to demonstrate strong ML engineering practices:
 - explainability and feature governance
 - MLOps (MLflow) — Stage 4 complete
 - FastAPI model serving — Stage 5 complete
-- Next.js frontend — planned Stage 6
+- Next.js frontend — Stage 6 complete
 
 ---
 
@@ -118,6 +118,7 @@ The full suite covers:
 - Stage 2: donor imputation (joint sampling, determinism, train-fold-only fitting), derived price features (hand-calculated formulas, train-only statistics, unseen-category fallback), frequency encoding (train-fold-only counts, NaN-vs-zero semantics, no customer-ID frequency feature), the leakage probe (synthetic detectability regression tests), the three-way early-stopping split (byte-identical primary_val to Stage 1, fold disjointness), and XGBoost pipeline behavior (probability validity, determinism, early stopping)
 - Stage 3: deterministic representative SHAP sampling and grouping, raw-margin additivity (including early-stopping tree-range alignment), explanation privacy contracts, feature governance, calibration diagnostics, and documented evaluation-history controls
 - Stage 5: FastAPI request validation, safe errors, vectorized inference, no-profile donor-routing controls, public explanation privacy, and an opt-in local-registry smoke test
+- Stage 6: Next.js synthetic-scenario frontend, API readiness state, cautious score/explanation presentation, CORS allowlisting, and data-free client tests
 
 Tests requiring real ASOS training data are marked `raw_training_data`; tests
 that inspect the historical test files are additionally marked
@@ -163,6 +164,23 @@ not expose raw probabilities, SHAP values, feature names, or donor attributes.
 These are **dataset-conditional return-risk scores from a returner-enriched
 research sample, not merchant-wide calibrated return probabilities**. See
 [docs/stage5-api.md](docs/stage5-api.md) for the full contract.
+
+## How to Run the Stage 6 Frontend
+
+Start the Stage 5 API first, with an existing local model-of-record, then run:
+
+```bash
+cd frontend
+npm install
+cp .env.example .env.local
+npm run dev
+```
+
+Open `http://localhost:3000`. The frontend is intentionally a synthetic,
+single-event demonstrator: it calls the frozen API only and never accesses raw
+ASOS data, MLflow, batch inference, or official test evaluation. See
+[docs/stage6-frontend.md](docs/stage6-frontend.md) for its API/CORS contract,
+score interpretation, and verification commands.
 
 To test an already-created local model-of-record explicitly:
 
@@ -225,6 +243,7 @@ ReturnGuard/
 │   ├── stage2-gbdt.md        # Stage 2 methodology, results, and reasoning
 │   ├── stage3-methodology.md # Stage 3 methods, results, and decisions
 │   ├── stage5-api.md          # Stage 5 frozen-model serving contract
+│   ├── stage6-frontend.md     # Stage 6 Next.js consumer and integration contract
 │   ├── model-card.md         # Model-of-record constraints and intended use
 │   └── evaluation-history.md # Test-inspection and validation-use disclosure
 ├── ml/
@@ -240,6 +259,7 @@ ReturnGuard/
 ├── notebooks/         # Exploratory notebooks (empty — logic lives in ml/ and scripts/)
 ├── reports/           # Generated metrics/plots/models (gitignored, regenerable)
 ├── backend/            # Stage 5 FastAPI request contracts and frozen A3 serving adapter
+├── frontend/           # Stage 6 Next.js frozen-model demonstrator
 ├── scripts/
 │   ├── audit_dataset.py   # Stage 0 dataset audit script
 │   ├── build_dataset.py   # Stage 1 join + split builder

@@ -168,6 +168,12 @@ Configuration is resolved once when the process starts:
 | `RETURNGUARD_LOG_LEVEL` | `INFO` |
 | `RETURNGUARD_MAX_BATCH_SIZE` | `100` (permitted range 1–100) |
 | `RETURNGUARD_EXPLANATIONS_ENABLED` | `true` |
+| `RETURNGUARD_CORS_ORIGINS` | `http://localhost:3000` |
+
+Browser access is intentionally an explicit origin allowlist. The default is
+the local Stage 6 development server; methods are limited to `GET` and `POST`,
+and credentials are not allowed. A deployment must set only its trusted UI
+origins rather than using a wildcard.
 
 For frozen-model governance, a `RETURNGUARD_MODEL_URI` override is accepted
 only when it identifies the same `model-of-record` alias or that alias's exact

@@ -38,6 +38,24 @@ def test_health_ready_model_and_prediction_endpoints(app_with_fake_service, fake
         assert "examples" in openapi.json()["components"]["schemas"]["PredictionRequest"]
 
 
+def test_cors_allows_only_the_configured_frontend_origin(app_with_fake_service):
+    with TestClient(app_with_fake_service) as client:
+        allowed = client.options(
+            "/predict",
+            headers={
+                "Origin": "http://localhost:3000",
+                "Access-Control-Request-Method": "POST",
+                "Access-Control-Request-Headers": "content-type",
+            },
+        )
+        blocked = client.get("/health", headers={"Origin": "https://untrusted.example"})
+
+    assert allowed.status_code == 200
+    assert allowed.headers["access-control-allow-origin"] == "http://localhost:3000"
+    assert "POST" in allowed.headers["access-control-allow-methods"]
+    assert "access-control-allow-origin" not in blocked.headers
+
+
 def test_batch_is_one_service_call_and_preserves_result_order(app_with_fake_service, fake_service):
     with TestClient(app_with_fake_service) as client:
         response = client.post("/predict/batch", json={"events": [VALID_EVENT, MISSING_CUSTOMER_EVENT]})

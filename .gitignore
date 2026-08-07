@@ -56,3 +56,10 @@ reports/final_test_attempts/
 # Logs
 *.log
 logs/
+
+# Stage 6 Next.js client
+frontend/node_modules/
+frontend/.next/
+frontend/coverage/
+frontend/.env.local
+frontend/tsconfig.tsbuildinfo

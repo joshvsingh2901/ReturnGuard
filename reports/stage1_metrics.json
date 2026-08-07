@@ -1,0 +1,500 @@
+{
+  "overall_prevalence": 0.5530704467717892,
+  "primary_split": {
+    "n_train": 1094622,
+    "n_val": 274511,
+    "prevalence_baseline": {
+      "n": 274511,
+      "prevalence": 0.5549577248270561,
+      "threshold": 0.5,
+      "roc_auc": 0.5,
+      "pr_auc": 0.5549577248270561,
+      "log_loss": 0.6871055281229896,
+      "brier": 0.24698522078468285,
+      "accuracy": 0.5549577248270561,
+      "precision": 0.5549577248270561,
+      "recall": 1.0,
+      "f1": 0.7137913989125062,
+      "confusion_matrix": [
+        [
+          0,
+          122169
+        ],
+        [
+          0,
+          152342
+        ]
+      ]
+    },
+    "majority_baseline": {
+      "n": 274511,
+      "prevalence": 0.5549577248270561,
+      "threshold": 0.5,
+      "roc_auc": 0.5,
+      "pr_auc": 0.5549577248270561,
+      "log_loss": 16.040949509837684,
+      "brier": 0.44504227517294387,
+      "accuracy": 0.5549577248270561,
+      "precision": 0.5549577248270561,
+      "recall": 1.0,
+      "f1": 0.7137913989125062,
+      "confusion_matrix": [
+        [
+          0,
+          122169
+        ],
+        [
+          0,
+          152342
+        ]
+      ]
+    },
+    "lr_a": {
+      "n": 274511,
+      "prevalence": 0.5549577248270561,
+      "threshold": 0.5,
+      "roc_auc": 0.6300356977588127,
+      "pr_auc": 0.6722268312739965,
+      "log_loss": 0.6608462742073492,
+      "brier": 0.23436625250367676,
+      "accuracy": 0.5974368968820921,
+      "precision": 0.6224075374531836,
+      "recall": 0.6981462761418388,
+      "f1": 0.6581049557270235,
+      "confusion_matrix": [
+        [
+          57646,
+          64523
+        ],
+        [
+          45985,
+          106357
+        ]
+      ],
+      "skill_vs_prevalence": {
+        "log_loss_skill": 0.03821720658742844,
+        "brier_skill": 0.05109199749246163
+      },
+      "n_features": 36,
+      "calibration": {
+        "ece": 0.006182920484114834,
+        "curve": {
+          "n_bins": 10,
+          "mean_predicted": [
+            0.39487250902478366,
+            0.43686094239475143,
+            0.46453375777441847,
+            0.49070583616643165,
+            0.5161678843843495,
+            0.5343663696017915,
+            0.5940136645284916,
+            0.6468547604738579,
+            0.6884322237756768,
+            0.7602524095336847
+          ],
+          "mean_observed": [
+            0.39518537402578485,
+            0.4284214717486517,
+            0.46656181619256015,
+            0.49796747967479676,
+            0.5316038411924896,
+            0.5332787982449617,
+            0.6046054785550584,
+            0.651628890022593,
+            0.6918216153399187,
+            0.7516559926806954
+          ],
+          "bin_counts": [
+            27458,
+            27627,
+            29248,
+            25584,
+            27908,
+            26894,
+            27489,
+            27442,
+            27536,
+            27325
+          ]
+        }
+      }
+    },
+    "lr_b": {
+      "n": 274511,
+      "prevalence": 0.5549577248270561,
+      "threshold": 0.5,
+      "roc_auc": 0.6380905371469471,
+      "pr_auc": 0.6775301699229537,
+      "log_loss": 0.6576809969344211,
+      "brier": 0.23279502296632973,
+      "accuracy": 0.6020888051844917,
+      "precision": 0.6211657045210538,
+      "recall": 0.725381050531042,
+      "f1": 0.6692405289438383,
+      "confusion_matrix": [
+        [
+          54774,
+          67395
+        ],
+        [
+          41836,
+          110506
+        ]
+      ],
+      "skill_vs_prevalence": {
+        "log_loss_skill": 0.04282388946709459,
+        "brier_skill": 0.05745363132769743
+      },
+      "n_features": 38,
+      "calibration": {
+        "ece": 0.011895862129447245,
+        "curve": {
+          "n_bins": 10,
+          "mean_predicted": [
+            0.3753984062651611,
+            0.4266053663918761,
+            0.4636072633614026,
+            0.4989118223050871,
+            0.520483944785789,
+            0.5387980764856928,
+            0.5896538567482508,
+            0.6455389080931211,
+            0.690730364813156,
+            0.7755301472182501
+          ],
+          "mean_observed": [
+            0.3452320244773075,
+            0.4265953186997197,
+            0.4863465675015495,
+            0.5047688160895708,
+            0.5433645674438875,
+            0.5397395772960859,
+            0.5993224290554078,
+            0.6509416778988015,
+            0.6957518003928129,
+            0.759559252772913
+          ],
+          "bin_counts": [
+            27454,
+            27471,
+            27429,
+            28938,
+            27534,
+            25881,
+            27451,
+            27451,
+            27494,
+            27408
+          ]
+        }
+      }
+    },
+    "price_ablation": {
+      "delta_roc_auc_b_minus_a": 0.008054839388134338,
+      "delta_log_loss_a_minus_b": 0.0031652772729281464,
+      "delta_brier_a_minus_b": 0.0015712295373470353,
+      "delta_ece_a_minus_b": -0.005712941645332411
+    },
+    "cold_start_primary_split_lr_b": {
+      "new_customer_known_product": {
+        "n": 226832,
+        "prevalence": 0.5428599139451223,
+        "threshold": 0.5,
+        "roc_auc": 0.6454001329309133,
+        "pr_auc": 0.6742469636031843,
+        "log_loss": 0.6568932439883299,
+        "brier": 0.2324061973070513,
+        "accuracy": 0.6025516681949636,
+        "precision": 0.6134297151189182,
+        "recall": 0.7243011905341974,
+        "f1": 0.6642709248804611,
+        "confusion_matrix": [
+          [
+            47489,
+            56205
+          ],
+          [
+            33949,
+            89189
+          ]
+        ],
+        "suppressed": false
+      },
+      "new_customer_new_product": {
+        "n": 47679,
+        "prevalence": 0.612512846326475,
+        "threshold": 0.5,
+        "roc_auc": 0.6016753372617131,
+        "pr_auc": 0.6974022590234836,
+        "log_loss": 0.6614287176556559,
+        "brier": 0.23464485416969932,
+        "accuracy": 0.5998867425910779,
+        "precision": 0.6557664503030116,
+        "recall": 0.7299342555814272,
+        "f1": 0.6908654858939249,
+        "confusion_matrix": [
+          [
+            7285,
+            11190
+          ],
+          [
+            7887,
+            21317
+          ]
+        ],
+        "suppressed": false
+      }
+    },
+    "product_coverage_diagnostic_lr_b": {
+      "with_product_node": {
+        "n": 179095,
+        "prevalence": 0.5543259164130768,
+        "threshold": 0.5,
+        "roc_auc": 0.659635656247954,
+        "pr_auc": 0.6933545958303416,
+        "log_loss": 0.6492119735829868,
+        "brier": 0.22871986593046004,
+        "accuracy": 0.6207320137357268,
+        "precision": 0.6556332155196378,
+        "recall": 0.6651893187747414,
+        "f1": 0.6603766981165095,
+        "confusion_matrix": [
+          [
+            45132,
+            34686
+          ],
+          [
+            33239,
+            66038
+          ]
+        ]
+      },
+      "without_product_node": {
+        "n": 95416,
+        "prevalence": 0.556143623710908,
+        "threshold": 0.5,
+        "roc_auc": 0.5870035680131052,
+        "pr_auc": 0.6334436739687512,
+        "log_loss": 0.6735772799176224,
+        "brier": 0.2404440571884633,
+        "accuracy": 0.5670956652972248,
+        "precision": 0.5761820231416096,
+        "recall": 0.8379911429379063,
+        "f1": 0.6828519218070975,
+        "confusion_matrix": [
+          [
+            9642,
+            32709
+          ],
+          [
+            8597,
+            44468
+          ]
+        ]
+      }
+    }
+  },
+  "secondary_split_diagnostic": {
+    "n_train": 1095306,
+    "n_val": 273827,
+    "lr_b_overall": {
+      "n": 273827,
+      "prevalence": 0.5530718300240662,
+      "threshold": 0.5,
+      "roc_auc": 0.6390565666287988,
+      "pr_auc": 0.6768460492059108,
+      "log_loss": 0.657689269981755,
+      "brier": 0.2327934118050739,
+      "accuracy": 0.6031107231938414,
+      "precision": 0.6201556485825864,
+      "recall": 0.7287482006787898,
+      "f1": 0.6700808412590957,
+      "confusion_matrix": [
+        [
+          54782,
+          67599
+        ],
+        [
+          41080,
+          110366
+        ]
+      ]
+    },
+    "cold_start_quadrants_lr_b": {
+      "known_customer_known_product": {
+        "n": 130515,
+        "prevalence": 0.5359154120216068,
+        "threshold": 0.5,
+        "roc_auc": 0.6504249074306868,
+        "pr_auc": 0.6729513078473396,
+        "log_loss": 0.656098944210203,
+        "brier": 0.2320117643338649,
+        "accuracy": 0.6044286097383442,
+        "precision": 0.6094166278389066,
+        "recall": 0.7292872971620559,
+        "f1": 0.6639852129542851,
+        "confusion_matrix": [
+          [
+            27877,
+            32693
+          ],
+          [
+            18935,
+            51010
+          ]
+        ],
+        "suppressed": false
+      },
+      "known_customer_new_product": {
+        "n": 27240,
+        "prevalence": 0.6108296622613804,
+        "threshold": 0.5,
+        "roc_auc": 0.6068388107788785,
+        "pr_auc": 0.6994384812173495,
+        "log_loss": 0.6592040833823389,
+        "brier": 0.23359280591052198,
+        "accuracy": 0.6057635829662261,
+        "precision": 0.6549044318420499,
+        "recall": 0.7495642766993209,
+        "f1": 0.699044362861867,
+        "confusion_matrix": [
+          [
+            4029,
+            6572
+          ],
+          [
+            4167,
+            12472
+          ]
+        ],
+        "suppressed": false
+      },
+      "new_customer_known_product": {
+        "n": 95696,
+        "prevalence": 0.5460311820765759,
+        "threshold": 0.5,
+        "roc_auc": 0.6428227398691749,
+        "pr_auc": 0.675166896375011,
+        "log_loss": 0.6574769532838962,
+        "brier": 0.2326999262978065,
+        "accuracy": 0.6032540545059355,
+        "precision": 0.615931444152303,
+        "recall": 0.7262740895259603,
+        "f1": 0.6665671353421097,
+        "confusion_matrix": [
+          [
+            19779,
+            23664
+          ],
+          [
+            14303,
+            37950
+          ]
+        ],
+        "suppressed": false
+      },
+      "new_customer_new_product": {
+        "n": 20376,
+        "prevalence": 0.6188162544169611,
+        "threshold": 0.5,
+        "roc_auc": 0.5847134577829338,
+        "pr_auc": 0.6889272672136874,
+        "log_loss": 0.6668478737195108,
+        "brier": 0.23717049334099397,
+        "accuracy": 0.5904495484884178,
+        "precision": 0.6567186121728903,
+        "recall": 0.7085415179633595,
+        "f1": 0.6816465112730324,
+        "confusion_matrix": [
+          [
+            3097,
+            4670
+          ],
+          [
+            3675,
+            8934
+          ]
+        ],
+        "suppressed": false
+      }
+    }
+  },
+  "lr_a_feature_names": [
+    "num__yearOfBirth",
+    "bin__isMale",
+    "bin__premier",
+    "cat_cust__shippingCountry_Country_A",
+    "cat_cust__shippingCountry_Country_B",
+    "cat_cust__shippingCountry_Country_C",
+    "cat_cust__shippingCountry_Country_D",
+    "cat_cust__shippingCountry_Country_E",
+    "cat_cust__shippingCountry_Country_F",
+    "cat_cust__shippingCountry_Country_G",
+    "cat_cust__shippingCountry_Country_H",
+    "cat_cust__shippingCountry_Country_I",
+    "cat_prod__productType_Jeans",
+    "cat_prod__productType___MISSING__",
+    "cat_prod__productType_productType_A",
+    "cat_prod__productType_productType_B",
+    "cat_prod__productType_productType_C",
+    "cat_prod__productType_productType_D",
+    "cat_prod__productType_productType_E",
+    "cat_prod__productType_productType_F",
+    "cat_prod__productType_productType_G",
+    "cat_prod__productType_productType_H",
+    "cat_prod__productType_productType_I",
+    "cat_prod__productType_productType_J",
+    "cat_prod__brandDesc_Brand_A",
+    "cat_prod__brandDesc_Brand_B",
+    "cat_prod__brandDesc_Brand_C",
+    "cat_prod__brandDesc_Brand_D",
+    "cat_prod__brandDesc_Brand_E",
+    "cat_prod__brandDesc_Brand_F",
+    "cat_prod__brandDesc_Brand_G",
+    "cat_prod__brandDesc_Brand_I",
+    "cat_prod__brandDesc_Brand_J",
+    "cat_prod__brandDesc_Brand_K",
+    "cat_prod__brandDesc_Pull&Bear",
+    "cat_prod__brandDesc___MISSING__"
+  ],
+  "lr_b_feature_names": [
+    "num__yearOfBirth",
+    "num__avgGbpPrice",
+    "num__avgDiscountValue",
+    "bin__isMale",
+    "bin__premier",
+    "cat_cust__shippingCountry_Country_A",
+    "cat_cust__shippingCountry_Country_B",
+    "cat_cust__shippingCountry_Country_C",
+    "cat_cust__shippingCountry_Country_D",
+    "cat_cust__shippingCountry_Country_E",
+    "cat_cust__shippingCountry_Country_F",
+    "cat_cust__shippingCountry_Country_G",
+    "cat_cust__shippingCountry_Country_H",
+    "cat_cust__shippingCountry_Country_I",
+    "cat_prod__productType_Jeans",
+    "cat_prod__productType___MISSING__",
+    "cat_prod__productType_productType_A",
+    "cat_prod__productType_productType_B",
+    "cat_prod__productType_productType_C",
+    "cat_prod__productType_productType_D",
+    "cat_prod__productType_productType_E",
+    "cat_prod__productType_productType_F",
+    "cat_prod__productType_productType_G",
+    "cat_prod__productType_productType_H",
+    "cat_prod__productType_productType_I",
+    "cat_prod__productType_productType_J",
+    "cat_prod__brandDesc_Brand_A",
+    "cat_prod__brandDesc_Brand_B",
+    "cat_prod__brandDesc_Brand_C",
+    "cat_prod__brandDesc_Brand_D",
+    "cat_prod__brandDesc_Brand_E",
+    "cat_prod__brandDesc_Brand_F",
+    "cat_prod__brandDesc_Brand_G",
+    "cat_prod__brandDesc_Brand_I",
+    "cat_prod__brandDesc_Brand_J",
+    "cat_prod__brandDesc_Brand_K",
+    "cat_prod__brandDesc_Pull&Bear",
+    "cat_prod__brandDesc___MISSING__"
+  ]
+}

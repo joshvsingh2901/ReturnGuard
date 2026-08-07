@@ -1,0 +1,55 @@
+# Data files — never commit raw data
+/c793h-osfstorage-archive.zip
+data/raw/*.p
+data/raw/*.pkl
+data/raw/*.csv
+data/raw/*.parquet
+data/raw/*.zip
+data/processed/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# macOS
+.DS_Store
+.AppleDouble
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Trained model artifacts (regenerable via scripts/train_baseline.py;
+# NOT ml/models/ — that's the source package for model-building code)
+reports/*.joblib
+reports/*.pkl
+reports/shap_cache/
+reports/*.npy
+reports/*.npz
+mlruns/
+
+# Logs
+*.log
+logs/

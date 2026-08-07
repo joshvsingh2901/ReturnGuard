@@ -52,7 +52,7 @@ def feature_display_name(feature_name: str, row: pd.Series | None = None) -> str
     if feature_name == "bin__premier":
         return "Premier membership"
     if family == "shipping_country":
-        value = row.get("shippingCountry") if row is not None else feature_name.rsplit("_", 1)[-1]
+        value = row.get("shippingCountry") if row is not None else feature_name.split("shippingCountry_", 1)[1]
         return f"Shipping country: {str(value).replace('_', ' ')}"
     if family == "product_type":
         value = row.get("productType") if row is not None else feature_name.split("productType_", 1)[1]
@@ -79,6 +79,27 @@ def feature_display_name(feature_name: str, row: pd.Series | None = None) -> str
     if feature_name == "num_prod__supplier_event_count":
         return "Supplier exposure count (experimental)"
     raise AssertionError(f"Unexpected display mapping for {feature_name!r}")
+
+
+def feature_indicator_display_name(feature_name: str) -> str:
+    """Name an encoded categorical column itself, rather than the row value.
+
+    A one-hot SHAP contribution can be non-zero when its category is absent.
+    Internal factor audits must therefore label the encoded indicator rather
+    than imply the row belongs to that category. User-facing grouped factors
+    continue to use :func:`feature_display_name` with the observed row.
+    """
+    family = feature_family(feature_name)
+    if family == "shipping_country":
+        value = feature_name.split("shippingCountry_", 1)[1]
+        return f"Shipping country indicator: {value.replace('_', ' ')}"
+    if family == "product_type":
+        value = feature_name.split("productType_", 1)[1]
+        return f"Product type indicator: {value}"
+    if family == "brand":
+        value = feature_name.split("brandDesc_", 1)[1]
+        return f"Brand indicator: {value}"
+    return feature_display_name(feature_name)
 
 
 def aggregate_grouped_shap(shap_values: np.ndarray, feature_names: list[str]) -> tuple[pd.DataFrame, pd.DataFrame]:

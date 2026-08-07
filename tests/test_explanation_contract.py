@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 
 from ml.explainability.contracts import build_local_explanation, user_facing_explanation
+from ml.explainability.grouping import feature_display_name, feature_indicator_display_name
 
 
 def _row():
@@ -54,3 +55,28 @@ def test_donor_customer_demographics_are_suppressed_user_facing():
     assert "gender" not in text.lower()
     assert "raw_model_probability" not in public
     assert "contribution" not in text
+
+
+def test_categorical_indicator_and_group_context_labels_do_not_conflict():
+    """Internal one-hot factors name their own category; public groups name the row."""
+    assert feature_display_name("cat_cust__shippingCountry_Country_E", _row()) == (
+        "Shipping country: Country A"
+    )
+    assert feature_indicator_display_name("cat_cust__shippingCountry_Country_E") == (
+        "Shipping country indicator: Country E"
+    )
+    explanation = build_local_explanation(
+        raw_probability=0.6,
+        raw_margin=0.4,
+        base_value=0.0,
+        shap_row=np.array([0.4]),
+        feature_names=["cat_cust__shippingCountry_Country_E"],
+        row=_row(),
+        customer_profile_imputed=False,
+        product_profile_available=True,
+        model_version="test",
+    )
+    assert explanation["internal_ranked_factors"][0]["display_name"] == (
+        "Shipping country indicator: Country E"
+    )
+    assert explanation["top_risk_factors"][0]["display_name"] == "Shipping country: Country A"

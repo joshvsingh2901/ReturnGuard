@@ -5,7 +5,11 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from ml.explainability.grouping import feature_display_name, feature_family
+from ml.explainability.grouping import (
+    feature_display_name,
+    feature_family,
+    feature_indicator_display_name,
+)
 
 
 METHODOLOGY_NOTE = (
@@ -35,7 +39,7 @@ def _factor_governance(feature_name: str) -> str:
 def _factor_from_feature(feature_name: str, contribution: float, row: pd.Series) -> dict:
     return {
         "feature": feature_name,
-        "display_name": feature_display_name(feature_name, row),
+        "display_name": feature_indicator_display_name(feature_name),
         "feature_family": feature_family(feature_name),
         "direction": "higher" if contribution > 0 else "lower",
         "contribution": float(contribution),
@@ -66,11 +70,20 @@ def _grouped_user_factors(factors: list[dict], row: pd.Series) -> list[dict]:
 
     outputs = []
     for factor in grouped.values():
-        if factor["feature_family"] == "customer_binary_attributes":
+        family = factor["feature_family"]
+        if family == "shipping_country":
+            factor["display_name"] = (
+                f"Shipping country: {str(row.get('shippingCountry', 'unavailable')).replace('_', ' ')}"
+            )
+        elif family == "product_type":
+            factor["display_name"] = f"Product type: {row.get('productType', 'unavailable')}"
+        elif family == "brand":
+            factor["display_name"] = f"Brand: {row.get('brandDesc', 'unavailable')}"
+        elif family == "customer_binary_attributes":
             factor["display_name"] = "Customer account attributes"
-        elif factor["feature_family"] == "price_discount":
+        elif family == "price_discount":
             factor["display_name"] = "Price and discount"
-        elif factor["feature_family"] == "derived_price_features":
+        elif family == "derived_price_features":
             factor["display_name"] = "Derived price context"
         factor["direction"] = "higher" if factor["contribution"] > 0 else "lower"
         outputs.append(factor)

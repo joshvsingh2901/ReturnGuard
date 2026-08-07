@@ -27,9 +27,9 @@ fact that primary-validation metrics were repeatedly visible.
 
 ## Test model performance
 
-No model predictions, ranking metrics, calibration metrics, or slice metrics
-have been computed on the official ASOS test events. Stage 3 records A3 as the
-conservative freeze candidate and stores its predeclared procedure in
-`reports/stage3_a3_freeze_spec.json`. One held-out test performance run may be
-executed only after this specification and the documentation are committed; its
-results must not reopen model selection.
+The one predeclared A3 evaluation has now been executed as a **held-out
+performance evaluation with prior aggregate test inspection**. It used the
+Stage 3 freeze spec, all official training events, training-fitted
+preprocessing, 659 fixed rounds, and one test-probability generation. No
+calibrator was fitted, A4 was not evaluated, and the results cannot reopen
+model selection. See [final-test-evaluation.md](final-test-evaluation.md).

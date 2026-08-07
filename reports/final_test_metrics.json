@@ -1,0 +1,189 @@
+{
+  "evaluation_type": "held-out performance evaluation with prior aggregate test inspection",
+  "model_name": "A3",
+  "model_status": "MODEL_OF_RECORD_CONSERVATIVE_FREEZE_CANDIDATE",
+  "frozen_model_spec": {
+    "model_status": "MODEL_OF_RECORD_CONSERVATIVE_FREEZE_CANDIDATE",
+    "model_name": "A3",
+    "model_family": "XGBoost binary logistic",
+    "feature_policy": "A3 donor-imputed demographics, catalogue, suspicious price/discount, derived price; no frequency features",
+    "preprocessing": {
+      "customer_missingness": "stable customer-ID keyed joint donor imputation",
+      "product_categoricals": "explicit __MISSING__ category",
+      "product_numeric_missingness": "native XGBoost NaN routing",
+      "year_of_birth_sentinel": "1900 converted to NaN"
+    },
+    "xgboost_params": {
+      "objective": "binary:logistic",
+      "tree_method": "hist",
+      "device": "cpu",
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "n_estimators": 2000,
+      "max_depth": 6,
+      "learning_rate": 0.1,
+      "random_state": 42,
+      "n_jobs": 4,
+      "eval_metric": "logloss",
+      "early_stopping_rounds": 50
+    },
+    "development_training_split": {
+      "primary_validation": "customer-grouped deterministic MD5 buckets [0, 20)",
+      "inner_train": "customer MD5 buckets [30, 100)",
+      "early_stop": "customer MD5 buckets [20, 30)"
+    },
+    "final_training_procedure": {
+      "official_test_not_run": true,
+      "future_refit": "fit preprocessing and XGBoost on all training events using the frozen configuration and a predeclared fixed boosting-round count",
+      "fixed_boosting_rounds": 659
+    },
+    "calibration_policy": "none; raw scores remain dataset-conditional",
+    "explanation_policy": "Tree SHAP raw-margin explanations; user-facing return-risk factors are grouped and non-causal",
+    "evaluation_metrics": [
+      "ROC-AUC",
+      "PR-AUC",
+      "log loss",
+      "Brier",
+      "ECE",
+      "calibration-in-the-large",
+      "calibration slope"
+    ],
+    "slice_definitions": [
+      "product covered vs product missing",
+      "known vs new product relative to fitted training fold",
+      "original customer node present vs missing"
+    ],
+    "feature_manifest_hash": "75834b5b656209a0266d8f5073946c4493d10ec738a71014d635c0851ca16404",
+    "code_version": "5499bebef8955c0c2a80799f5e56e6aefca8f4f3",
+    "freeze_spec_hash": "44893679b2145474167717befc53c89e68e8ec0e0d69131afd1619f31c69508f"
+  },
+  "final_training": {
+    "preprocessing_steps": [
+      "donor_impute",
+      "derived",
+      "preprocess"
+    ],
+    "feature_count": 41,
+    "feature_names": [
+      "num_cust__yearOfBirth",
+      "num_prod__avgGbpPrice",
+      "num_prod__avgDiscountValue",
+      "num_prod__discount_amount",
+      "num_prod__price_rel_type_median",
+      "num_prod__price_rel_brand_median",
+      "bin__isMale",
+      "bin__premier",
+      "cat_cust__shippingCountry_Country_A",
+      "cat_cust__shippingCountry_Country_B",
+      "cat_cust__shippingCountry_Country_C",
+      "cat_cust__shippingCountry_Country_D",
+      "cat_cust__shippingCountry_Country_E",
+      "cat_cust__shippingCountry_Country_F",
+      "cat_cust__shippingCountry_Country_G",
+      "cat_cust__shippingCountry_Country_H",
+      "cat_cust__shippingCountry_Country_I",
+      "cat_prod__productType_Jeans",
+      "cat_prod__productType___MISSING__",
+      "cat_prod__productType_productType_A",
+      "cat_prod__productType_productType_B",
+      "cat_prod__productType_productType_C",
+      "cat_prod__productType_productType_D",
+      "cat_prod__productType_productType_E",
+      "cat_prod__productType_productType_F",
+      "cat_prod__productType_productType_G",
+      "cat_prod__productType_productType_H",
+      "cat_prod__productType_productType_I",
+      "cat_prod__productType_productType_J",
+      "cat_prod__brandDesc_Brand_A",
+      "cat_prod__brandDesc_Brand_B",
+      "cat_prod__brandDesc_Brand_C",
+      "cat_prod__brandDesc_Brand_D",
+      "cat_prod__brandDesc_Brand_E",
+      "cat_prod__brandDesc_Brand_F",
+      "cat_prod__brandDesc_Brand_G",
+      "cat_prod__brandDesc_Brand_I",
+      "cat_prod__brandDesc_Brand_J",
+      "cat_prod__brandDesc_Brand_K",
+      "cat_prod__brandDesc_Pull&Bear",
+      "cat_prod__brandDesc___MISSING__"
+    ],
+    "fitted_xgboost_params": {
+      "objective": "binary:logistic",
+      "tree_method": "hist",
+      "device": "cpu",
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "n_estimators": 659,
+      "max_depth": 6,
+      "learning_rate": 0.1,
+      "random_state": 42,
+      "n_jobs": 4,
+      "eval_metric": "logloss"
+    },
+    "fixed_boosting_rounds": 659
+  },
+  "execution": {
+    "execution_timestamp_utc": "2026-08-07T06:54:00.876106+00:00",
+    "evaluation_description": "held-out performance evaluation with prior aggregate test inspection",
+    "git_revision": "37a4c05d60d9bb2ee5d5aa34e09836f5d9525828",
+    "freeze_source_revision": "5499bebef8955c0c2a80799f5e56e6aefca8f4f3",
+    "freeze_spec_hash": "44893679b2145474167717befc53c89e68e8ec0e0d69131afd1619f31c69508f",
+    "feature_manifest_hash": "75834b5b656209a0266d8f5073946c4493d10ec738a71014d635c0851ca16404",
+    "package_versions": {
+      "numpy": "2.0.2",
+      "pandas": "2.3.3",
+      "scikit-learn": "1.6.1",
+      "xgboost": "2.1.4",
+      "shap": "0.47.2"
+    },
+    "training_row_count": 1369133,
+    "test_row_count": 1460366,
+    "calibrator_fitted": false,
+    "test_probability_generation_count": 1
+  },
+  "official_test_metrics": {
+    "n": 1460366,
+    "prevalence": 0.5446347011639547,
+    "threshold": 0.5,
+    "roc_auc": 0.6567979569211047,
+    "pr_auc": 0.6828635708170503,
+    "log_loss": 0.6482650066972877,
+    "brier": 0.22861371532805316,
+    "accuracy": 0.6136057673213428,
+    "precision": 0.6187216089778564,
+    "recall": 0.7570904464108348,
+    "f1": 0.6809479787742316,
+    "confusion_matrix": [
+      [
+        293925,
+        371075
+      ],
+      [
+        193202,
+        602164
+      ]
+    ]
+  },
+  "validation_vs_test": {
+    "development_primary_validation_is_not_pristine": true,
+    "development_metrics": {
+      "roc_auc": 0.6547239012423106,
+      "log_loss": 0.6470164123161727,
+      "brier": 0.22808101980720666,
+      "ece": 0.004230165423024985
+    },
+    "official_test_metrics": {
+      "roc_auc": 0.6567979569211047,
+      "log_loss": 0.6482650066972877,
+      "brier": 0.22861371532805316,
+      "ece": 0.009676533164200472
+    },
+    "absolute_deltas": {
+      "roc_auc": 0.00207405567879404,
+      "log_loss": 0.0012485943811150202,
+      "brier": 0.0005326955208465045,
+      "ece": 0.005446367741175487
+    },
+    "interpretation": "Descriptive comparison only; it does not reopen model selection."
+  }
+}

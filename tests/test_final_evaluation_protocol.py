@@ -19,6 +19,7 @@ from ml.evaluation.final_protocol import (
     validate_a3_freeze_spec,
 )
 from ml.explainability.grouping import FREQUENCY_FEATURE_NAMES
+from ml.evaluation.metrics import compute_metrics
 
 
 ROOT = Path(__file__).parent.parent
@@ -105,3 +106,11 @@ def test_predeclared_slice_schema_and_counts_reconcile():
     for family in ("cold_start", "product_coverage", "customer_coverage"):
         for result in report[family].values():
             assert {"n", "prevalence", "roc_auc", "log_loss", "brier", "status"} <= set(result)
+
+
+def test_predeclared_overall_metric_schema_is_complete():
+    metrics = compute_metrics(np.array([0, 1, 0, 1]), np.array([0.1, 0.9, 0.4, 0.8]))
+    assert {
+        "n", "prevalence", "roc_auc", "log_loss", "brier", "pr_auc",
+        "accuracy", "precision", "recall", "f1", "confusion_matrix",
+    } <= set(metrics)

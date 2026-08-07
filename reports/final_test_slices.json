@@ -1,0 +1,109 @@
+{
+  "evaluation_type": "held-out performance evaluation with prior aggregate test inspection",
+  "model_name": "A3",
+  "execution": {
+    "execution_timestamp_utc": "2026-08-07T06:54:00.876106+00:00",
+    "evaluation_description": "held-out performance evaluation with prior aggregate test inspection",
+    "git_revision": "37a4c05d60d9bb2ee5d5aa34e09836f5d9525828",
+    "freeze_source_revision": "5499bebef8955c0c2a80799f5e56e6aefca8f4f3",
+    "freeze_spec_hash": "44893679b2145474167717befc53c89e68e8ec0e0d69131afd1619f31c69508f",
+    "feature_manifest_hash": "75834b5b656209a0266d8f5073946c4493d10ec738a71014d635c0851ca16404",
+    "package_versions": {
+      "numpy": "2.0.2",
+      "pandas": "2.3.3",
+      "scikit-learn": "1.6.1",
+      "xgboost": "2.1.4",
+      "shap": "0.47.2"
+    },
+    "training_row_count": 1369133,
+    "test_row_count": 1460366,
+    "calibrator_fitted": false,
+    "test_probability_generation_count": 1
+  },
+  "slices": {
+    "cold_start": {
+      "known_customer_known_product": {
+        "n": 289180,
+        "prevalence": 0.5534891762915831,
+        "roc_auc": 0.6667171193872078,
+        "log_loss": 0.6408171329082878,
+        "brier": 0.2252252823088677,
+        "status": "ok",
+        "small_sample_warning": false
+      },
+      "new_customer_known_product": {
+        "n": 769222,
+        "prevalence": 0.5284651245024193,
+        "roc_auc": 0.6634603341449099,
+        "log_loss": 0.6486937875745928,
+        "brier": 0.22884427817833997,
+        "status": "ok",
+        "small_sample_warning": false
+      },
+      "known_customer_new_product": {
+        "n": 120698,
+        "prevalence": 0.5978475202571708,
+        "roc_auc": 0.63989478688482,
+        "log_loss": 0.644611819384466,
+        "brier": 0.22678623740627368,
+        "status": "ok",
+        "small_sample_warning": false
+      },
+      "new_customer_new_product": {
+        "n": 281266,
+        "prevalence": 0.5569176509069707,
+        "roc_auc": 0.6352568119904738,
+        "log_loss": 0.6563174583287813,
+        "brier": 0.232251147416777,
+        "status": "ok",
+        "small_sample_warning": false
+      }
+    },
+    "product_coverage": {
+      "product_node_available": {
+        "n": 1008608,
+        "prevalence": 0.5390092087312415,
+        "roc_auc": 0.6807097542429765,
+        "log_loss": 0.637254147678966,
+        "brier": 0.22347400106501875,
+        "status": "ok",
+        "small_sample_warning": false
+      },
+      "product_node_missing": {
+        "n": 451758,
+        "prevalence": 0.5571943385617963,
+        "roc_auc": 0.5893171548306875,
+        "log_loss": 0.6728481695693387,
+        "brier": 0.24008879030937036,
+        "status": "ok",
+        "small_sample_warning": false
+      }
+    },
+    "customer_coverage": {
+      "customer_node_available": {
+        "n": 1385362,
+        "prevalence": 0.5389724851699411,
+        "roc_auc": 0.660830049050453,
+        "log_loss": 0.6474656066710973,
+        "brier": 0.22825977539737782,
+        "status": "ok",
+        "small_sample_warning": false
+      },
+      "customer_node_missing": {
+        "n": 75004,
+        "prevalence": 0.6492187083355554,
+        "roc_auc": 0.581518300190251,
+        "log_loss": 0.6630303314677437,
+        "brier": 0.2351511657338937,
+        "status": "ok",
+        "small_sample_warning": false
+      }
+    },
+    "reconciliation": {
+      "test_row_count": 1460366,
+      "cold_start_total": 1460366,
+      "product_coverage_total": 1460366,
+      "customer_coverage_total": 1460366
+    }
+  }
+}

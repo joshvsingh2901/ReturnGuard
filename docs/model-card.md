@@ -2,12 +2,12 @@
 
 ## Status
 
-The Stage 3 model of record is **A3**, a conservative freeze candidate: 41
-approved features and 659 frozen boosting rounds. Its re-fit development ROC-
-AUC is 0.654724 (archived A3: 0.654767). A4 is an experimental challenger
-because its frequency features cannot be proven point-in-time valid without
-timestamps, despite its 0.666866 development ROC-AUC. Official ASOS test model
-performance has not been evaluated.
+The frozen research model of record is **A3**: 41 approved features and 659
+fixed boosting rounds. Its held-out performance evaluation with prior aggregate
+test inspection gives ROC-AUC 0.656798, log loss 0.648265, and Brier 0.228614.
+These results do not change model selection. A4 remains an experimental
+challenger because its frequency features cannot be proven point-in-time valid
+without timestamps, despite its developmental 0.666866 ROC-AUC.
 
 ## Intended use
 
@@ -35,6 +35,10 @@ No calibrator is fitted. Calibration diagnostics describe only the
 returner-enriched development population. Merchant-specific calibration needs
 representative later merchant data.
 
+The official test slope is 1.0012 and calibration-in-the-large is -0.0424,
+but it remains within the same returner-enriched dataset family and does not
+justify merchant-wide probability claims or calibrator fitting.
+
 ## Explanation policy
 
 Tree SHAP explains raw model margin. User-facing explanations are grouped,
@@ -53,4 +57,5 @@ conditional rather than merchant-wide probabilities.
 ## Evaluation history
 
 See [evaluation-history.md](evaluation-history.md). Test labels/statistics
-were inspected during audit; test model performance remains uncomputed.
+were inspected during audit. The one predeclared frozen-A3 performance
+evaluation is now complete; see [final-test-evaluation.md](final-test-evaluation.md).

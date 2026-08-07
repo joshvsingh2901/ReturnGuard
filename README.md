@@ -2,7 +2,7 @@
 
 Predict whether a fashion e-commerce item will be returned.
 
-**Current stage**: Stage 3 — Explainability, Governance, and Calibration Policy (complete)
+**Current stage**: Frozen A3 official evaluation complete; Stage 4 not started
 
 ---
 
@@ -175,8 +175,9 @@ ReturnGuard/
 
 ## Current Limitations
 
-Stage 3 establishes A3 as the conservative model-of-record freeze candidate,
-not a merchant deployment model. A4 remains an experimental challenger. The
+The one predeclared held-out evaluation of frozen A3 is complete. It confirms
+development-consistent overall performance within the ASOS dataset family, not
+merchant deployment readiness. A4 remains an experimental challenger. The
 project has no temporal validation, merchant-representative labels, or
 point-in-time product exposure data.
 
@@ -209,6 +210,11 @@ Stage 2's hyperparameter tuning plateaued (best grid config beat the default by 
   contribution is temporally unverifiable without timestamps;
 - measured, but did not fit, calibration because the returner-enriched sample
   cannot yield merchant-wide probabilities; and
-- did not compute official ASOS test model performance.
+- did not itself compute official ASOS test model performance.
+
+The predeclared evaluation was subsequently executed on frozen A3 only. Its
+results are documented in [docs/final-test-evaluation.md](docs/final-test-evaluation.md);
+they do not reopen model selection, calibration fitting, feature engineering,
+or A4 comparison.
 
 The official test files were inspected during dataset auditing, including aggregate label statistics and structure. Test model performance has not been used for fitting, model selection, or final evaluation. Stage 2 selected configurations with its inner early-stop fold, while repeatedly calculating primary-validation metrics; those validation results are developmental rather than pristine confirmatory evidence. See [docs/evaluation-history.md](docs/evaluation-history.md) and [docs/model-card.md](docs/model-card.md).

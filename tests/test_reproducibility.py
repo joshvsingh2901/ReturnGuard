@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 import numpy as np
 import pytest
 
@@ -25,7 +27,8 @@ def test_reference_fixture_uses_positions_not_identifiers(synthetic_df_with_miss
     positions = select_reference_positions(synthetic_df_with_missing)
     probabilities = np.linspace(0.2, 0.8, len(positions))
     fixture = create_reference_fixture(synthetic_df_with_missing, probabilities)
-    diagnostics, passed = compare_reference_predictions(probabilities, fixture)
+    reloaded = json.loads(json.dumps(fixture, sort_keys=True))
+    diagnostics, passed = compare_reference_predictions(probabilities, reloaded)
 
     assert passed
     assert diagnostics["max_abs_delta"] == 0.0

@@ -1,8 +1,20 @@
 {
-  "model_version": "returnguard-a3-v1",
+  "expected_feature_count": 41,
+  "expected_probabilities": [
+    0.6655564904212952,
+    0.7163475751876831,
+    0.529657781124115,
+    0.5074011087417603
+  ],
+  "fixture_hash": "e9fa1a4ece2fe0075d89318a80fecbd9aaaf20539e9cd50bb032ae58354c3f6a",
   "fixture_version": "a3-training-reference-v1",
-  "selection_policy": "Pending first governed bootstrap. The fixture will store only deterministic training row positions and expected probabilities; it never stores raw customer/product IDs or targets.",
-  "row_positions": {},
-  "expected_probabilities": null,
-  "expected_feature_count": 41
+  "model_version": "returnguard-a3-v1",
+  "row_positions": {
+    "customer_and_product_missing": 1,
+    "customer_and_product_present": 12,
+    "customer_missing_product_present": 104,
+    "customer_present_product_missing": 0
+  },
+  "selected_case_count": 4,
+  "selection_policy": "first deterministic row position for each available customer/product coverage combination; no raw IDs or targets persisted"
 }

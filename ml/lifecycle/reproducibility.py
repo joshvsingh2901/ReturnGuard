@@ -28,6 +28,12 @@ METRIC_TOLERANCES = {"roc_auc": 0.003, "log_loss": 0.005, "brier": 0.003, "ece":
 REFERENCE_MEAN_ABS_TOLERANCE = 1e-6
 REFERENCE_MAX_ABS_TOLERANCE = 1e-5
 ARTIFACT_RELOAD_MAX_ABS_TOLERANCE = 1e-7
+REFERENCE_CASE_ORDER = (
+    "customer_and_product_present",
+    "customer_missing_product_present",
+    "customer_present_product_missing",
+    "customer_and_product_missing",
+)
 
 
 @dataclass
@@ -124,10 +130,10 @@ def select_reference_positions(frame: pd.DataFrame) -> dict[str, int]:
     customer_present = frame["isMale"].notna()
     product_present = frame["productType"] != "__MISSING__"
     combinations = {
-        "customer_and_product_present": customer_present & product_present,
-        "customer_missing_product_present": ~customer_present & product_present,
-        "customer_present_product_missing": customer_present & ~product_present,
-        "customer_and_product_missing": ~customer_present & ~product_present,
+        REFERENCE_CASE_ORDER[0]: customer_present & product_present,
+        REFERENCE_CASE_ORDER[1]: ~customer_present & product_present,
+        REFERENCE_CASE_ORDER[2]: customer_present & ~product_present,
+        REFERENCE_CASE_ORDER[3]: ~customer_present & ~product_present,
     }
     positions = {}
     for label, mask in combinations.items():
@@ -140,7 +146,10 @@ def select_reference_positions(frame: pd.DataFrame) -> dict[str, int]:
 
 
 def reference_frame(frame: pd.DataFrame, positions: dict[str, int]) -> pd.DataFrame:
-    return frame.iloc[list(positions.values())].copy()
+    # JSON object key order is not part of the fixture contract.  Keep the
+    # probability vector aligned to this explicit case order after reload.
+    ordered_positions = [positions[case] for case in REFERENCE_CASE_ORDER if case in positions]
+    return frame.iloc[ordered_positions].copy()
 
 
 def validate_reference_fixture(reference: dict) -> None:
@@ -152,6 +161,8 @@ def validate_reference_fixture(reference: dict) -> None:
     expected = reference.get("expected_probabilities")
     if expected is not None and len(expected) != len(positions):
         raise ValueError("Reference fixture probabilities do not align with row positions")
+    if set(positions) - set(REFERENCE_CASE_ORDER):
+        raise ValueError("Reference fixture contains an unknown preprocessing case")
 
 
 def create_reference_fixture(frame: pd.DataFrame, probabilities: np.ndarray) -> dict:

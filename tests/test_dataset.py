@@ -19,6 +19,9 @@ import ml.data.compat  # noqa: E402,F401 — must precede any pandas unpickling
 
 import pandas as pd
 
+
+pytestmark = [pytest.mark.raw_training_data, pytest.mark.historical_test_data]
+
 RAW_DIR = Path(__file__).parent.parent / "data" / "raw"
 
 EXPECTED_FILES = {

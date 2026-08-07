@@ -16,6 +16,8 @@ from ml.data.joins import (
 from ml.data.loaders import load_event_train
 from ml.data.schema import MISSING_CATEGORY_TOKEN, TARGET_COL
 
+pytestmark = pytest.mark.raw_training_data
+
 
 @pytest.fixture(scope="module")
 def joined():

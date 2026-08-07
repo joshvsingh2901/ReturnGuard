@@ -1,0 +1,8 @@
+{
+  "model_version": "returnguard-a3-v1",
+  "fixture_version": "a3-training-reference-v1",
+  "selection_policy": "Pending first governed bootstrap. The fixture will store only deterministic training row positions and expected probabilities; it never stores raw customer/product IDs or targets.",
+  "row_positions": {},
+  "expected_probabilities": null,
+  "expected_feature_count": 41
+}

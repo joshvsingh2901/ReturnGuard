@@ -8,6 +8,7 @@ It never tunes, selects models, fits a calibrator, or evaluates A4.
 
 from __future__ import annotations
 
+import argparse
 import importlib.metadata
 import json
 import subprocess
@@ -30,15 +31,12 @@ from ml.evaluation.final_protocol import (
 )
 from ml.evaluation.metrics import compute_metrics
 from ml.features.preprocessing import clean_year_of_birth
-
+from ml.lifecycle.test_guard import require_final_test_rerun_authorization
 
 ROOT = Path(__file__).parent.parent
 REPORTS_DIR = ROOT / "reports"
 FREEZE_SPEC_PATH = REPORTS_DIR / "stage3_a3_freeze_spec.json"
 STAGE3_SUMMARY_PATH = REPORTS_DIR / "stage3_summary.json"
-FINAL_METRICS_PATH = REPORTS_DIR / "final_test_metrics.json"
-FINAL_SLICES_PATH = REPORTS_DIR / "final_test_slices.json"
-FINAL_CALIBRATION_PATH = REPORTS_DIR / "final_test_calibration.json"
 EVALUATION_DESCRIPTION = "held-out performance evaluation with prior aggregate test inspection"
 
 
@@ -111,8 +109,35 @@ def _validation_comparison(stage3: dict, test_metrics: dict, test_calibration: d
     }
 
 
+def _attempt_report_paths() -> tuple[Path, Path, Path]:
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    revision = _git_revision()[:8]
+    attempt_dir = REPORTS_DIR / "final_test_attempts" / f"{timestamp}__{revision}"
+    attempt_dir.mkdir(parents=True, exist_ok=False)
+    return (
+        attempt_dir / "final_test_metrics.json",
+        attempt_dir / "final_test_slices.json",
+        attempt_dir / "final_test_calibration.json",
+    )
+
+
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--allow-final-test-rerun", action="store_true")
+    parser.add_argument("--reason", help="Documented corrective reason for an exceptional rerun")
+    return parser.parse_args()
+
+
 def main() -> None:
-    print("ReturnGuard — frozen A3 official test evaluation")
+    args = _parse_args()
+    require_final_test_rerun_authorization(
+        allow_flag=args.allow_final_test_rerun,
+        reason=args.reason,
+    )
+    metrics_path, slices_path, calibration_path = _attempt_report_paths()
+    print("ReturnGuard — exceptional frozen A3 official test rerun")
+    print(f"Reason: {args.reason}")
+    print(f"Git revision: {_git_revision()}")
     print(f"Evaluation posture: {EVALUATION_DESCRIPTION}")
     freeze_spec, stage3 = _load_and_verify_freeze()
     print("Freeze verified before test prediction: A3 / 41 features / no frequency / 659 rounds / no calibrator")
@@ -181,11 +206,11 @@ def main() -> None:
         "slices": slices,
     }
     REPORTS_DIR.mkdir(exist_ok=True)
-    _write_json(FINAL_METRICS_PATH, metrics_report)
-    _write_json(FINAL_SLICES_PATH, slices_report)
-    _write_json(FINAL_CALIBRATION_PATH, calibration_report)
+    _write_json(metrics_path, metrics_report)
+    _write_json(slices_path, slices_report)
+    _write_json(calibration_path, calibration_report)
     print(f"Official test ROC-AUC={test_metrics['roc_auc']:.6f} LogLoss={test_metrics['log_loss']:.6f} Brier={test_metrics['brier']:.6f}")
-    print("Final evaluation reports written. Model development stops here.")
+    print("Exceptional final evaluation reports written to a new attempt directory. Model development remains closed.")
 
 
 if __name__ == "__main__":

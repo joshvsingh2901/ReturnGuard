@@ -2,7 +2,7 @@
 
 Predict whether a fashion e-commerce item will be returned.
 
-**Current stage**: Frozen A3 official evaluation complete; Stage 4 not started
+**Current stage**: Stage 4 lifecycle and reproducibility foundations complete for frozen `returnguard-a3-v1`
 
 ---
 
@@ -64,11 +64,11 @@ Raw data files are excluded from git via `.gitignore`.
 
 ```bash
 python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt -c constraints-stage3.txt
+.venv/bin/pip install -r requirements.txt -c constraints-stage4.txt
 ```
 
-The validated Stage 3 environment uses Python 3.9, XGBoost 2.1.4, and SHAP
-0.47.2; the constraint file makes that analysis reproducible. The pickle files
+The validated Stage 4 environment uses Python 3.9.6, XGBoost 2.1.4, SHAP
+0.47.2, and local MLflow; the constraint file makes the frozen lifecycle reproducible. The pickle files
 were created with pandas 1.x; a compatibility shim (`ml/data/compat.py`) handles
 loading them under pandas 2.x.
 
@@ -108,7 +108,8 @@ python scripts/train_stage2.py     # requires Stage 1's build_dataset.py to have
 ## How to Run Tests
 
 ```bash
-pytest tests/ -v
+ruff check .
+pytest -m "not raw_training_data and not historical_test_data and not full_rebuild"
 ```
 
 The full suite covers:
@@ -116,6 +117,34 @@ The full suite covers:
 - Stage 1: leakage-safe feature schema, join correctness (row-count preservation, coverage rates), deterministic customer-grouped splitting, preprocessing (sentinel cleaning, unseen categories, missing-node handling), model behavior (probability validity, convergence), metrics (closed-form baseline checks, perfect-prediction fixtures), calibration binning, and cold-start slice evaluation
 - Stage 2: donor imputation (joint sampling, determinism, train-fold-only fitting), derived price features (hand-calculated formulas, train-only statistics, unseen-category fallback), frequency encoding (train-fold-only counts, NaN-vs-zero semantics, no customer-ID frequency feature), the leakage probe (synthetic detectability regression tests), the three-way early-stopping split (byte-identical primary_val to Stage 1, fold disjointness), and XGBoost pipeline behavior (probability validity, determinism, early stopping)
 - Stage 3: deterministic representative SHAP sampling and grouping, raw-margin additivity (including early-stopping tree-range alignment), explanation privacy contracts, feature governance, calibration diagnostics, and documented evaluation-history controls
+
+Tests requiring real ASOS training data are marked `raw_training_data`; tests
+that inspect the historical test files are additionally marked
+`historical_test_data`. They are intentionally excluded from normal lifecycle
+and CI commands.
+
+---
+
+## How to Rebuild the Frozen Model
+
+The normal lifecycle command verifies only the three official **training** raw
+files, recreates frozen A3, checks validation and reference predictions, saves
+a composite inference artifact to local MLflow, and never imports the official
+test evaluator:
+
+```bash
+.venv/bin/python scripts/reproduce_model.py --profile full
+```
+
+The first governed rebuild establishes the safe training-derived reference
+fixture once:
+
+```bash
+.venv/bin/python scripts/reproduce_model.py --profile full --bootstrap-reference --register
+```
+
+Model registration is separate from explicit model-of-record promotion. See
+[docs/stage4-mlops.md](docs/stage4-mlops.md).
 
 ---
 
@@ -157,6 +186,9 @@ ReturnGuard/
 │   ├── governance/    # feature manifest and frozen-model specification
 │   ├── models/        # trivial baselines, Logistic Regression, XGBoost
 │   └── evaluation/    # metrics, calibration, cold-start slicing, leakage probe
+├── artifacts/
+│   ├── manifests/     # Git-tracked data and frozen-model provenance
+│   └── reference/     # small training-derived prediction reference fixture
 ├── notebooks/         # Exploratory notebooks (empty — logic lives in ml/ and scripts/)
 ├── reports/           # Generated metrics/plots/models (gitignored, regenerable)
 ├── scripts/
@@ -168,7 +200,8 @@ ReturnGuard/
 ├── tests/
 ├── .gitignore
 ├── README.md
-└── requirements.txt
+├── requirements.txt
+└── constraints-stage4.txt
 ```
 
 ---
@@ -217,4 +250,4 @@ results are documented in [docs/final-test-evaluation.md](docs/final-test-evalua
 they do not reopen model selection, calibration fitting, feature engineering,
 or A4 comparison.
 
-The official test files were inspected during dataset auditing, including aggregate label statistics and structure. Test model performance has not been used for fitting, model selection, or final evaluation. Stage 2 selected configurations with its inner early-stop fold, while repeatedly calculating primary-validation metrics; those validation results are developmental rather than pristine confirmatory evidence. See [docs/evaluation-history.md](docs/evaluation-history.md) and [docs/model-card.md](docs/model-card.md).
+The official test files were inspected during dataset auditing, including aggregate label statistics and structure. The one frozen-A3 performance evaluation is complete and cannot reopen fitting, model selection, calibration, or A4 comparison. Stage 2 selected configurations with its inner early-stop fold, while repeatedly calculating primary-validation metrics; those validation results are developmental rather than pristine confirmatory evidence. See [docs/evaluation-history.md](docs/evaluation-history.md) and [docs/model-card.md](docs/model-card.md).

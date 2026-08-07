@@ -1,0 +1,39 @@
+[tool.pytest.ini_options]
+markers = [
+  "raw_training_data: requires local official ASOS training raw files",
+  "historical_test_data: accesses historical official ASOS test files or labels",
+  "full_rebuild: runs a full frozen A3 rebuild",
+]
+
+[tool.ruff]
+target-version = "py39"
+line-length = 100
+extend-exclude = [".mlflow"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]
+
+# Stage 4 begins lint enforcement.  These narrow suppressions preserve the
+# pre-existing Stage 0–3 baseline without a formatting-only churn; new
+# lifecycle code is fully checked by the same command.
+[tool.ruff.lint.per-file-ignores]
+"ml/data/loaders.py" = ["I001"]
+"ml/evaluation/final_protocol.py" = ["I001"]
+"ml/evaluation/slices.py" = ["F401"]
+"ml/explainability/contracts.py" = ["I001", "F401", "F841"]
+"ml/explainability/grouping.py" = ["I001"]
+"ml/explainability/sampling.py" = ["I001"]
+"ml/features/frequency.py" = ["I001"]
+"ml/governance/feature_manifest.py" = ["I001"]
+"ml/models/gbdt.py" = ["I001"]
+"scripts/audit_dataset.py" = ["I001"]
+"scripts/build_dataset.py" = ["I001"]
+"scripts/run_stage3.py" = ["I001", "F401"]
+"tests/test_dataset.py" = ["I001"]
+"tests/test_evaluation_history_docs.py" = ["I001"]
+"tests/test_final_evaluation_protocol.py" = ["I001"]
+"tests/test_frequency.py" = ["F401"]
+"tests/test_gbdt.py" = ["F401"]
+"tests/test_probe.py" = ["F401"]
+"tests/test_schema.py" = ["I001"]

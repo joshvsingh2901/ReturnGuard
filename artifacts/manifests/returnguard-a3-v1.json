@@ -1,0 +1,49 @@
+{
+  "semantic_model_version": "returnguard-a3-v1",
+  "model_family": "XGBoost binary logistic",
+  "xgboost_params": {
+    "objective": "binary:logistic",
+    "tree_method": "hist",
+    "device": "cpu",
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "n_estimators": 2000,
+    "max_depth": 6,
+    "learning_rate": 0.1,
+    "random_state": 42,
+    "n_jobs": 4,
+    "eval_metric": "logloss",
+    "early_stopping_rounds": 50
+  },
+  "fixed_boosting_rounds": 659,
+  "random_seed": 42,
+  "preprocessing": {
+    "artifact_safe_donor_imputation": true,
+    "derived_price_features": true,
+    "product_frequency_features": false,
+    "calibrator": false
+  },
+  "ordered_feature_count": 41,
+  "feature_manifest_hash": "75834b5b656209a0266d8f5073946c4493d10ec738a71014d635c0851ca16404",
+  "freeze_spec_hash": "44893679b2145474167717befc53c89e68e8ec0e0d69131afd1619f31c69508f",
+  "dataset_version": "asos-graphreturns-osf-c793h-v1",
+  "development_split": {
+    "primary_validation": "customer-grouped deterministic MD5 buckets [0, 20)",
+    "inner_train": "customer MD5 buckets [30, 100)",
+    "early_stop": "customer MD5 buckets [20, 30)"
+  },
+  "expected_development_validation_metrics": {
+    "roc_auc": 0.6547239012423106,
+    "log_loss": 0.6470164123161727,
+    "brier": 0.22808101980720666,
+    "ece": 0.004230165423024985
+  },
+  "metric_tolerances": {
+    "roc_auc": 0.003,
+    "log_loss": 0.005,
+    "brier": 0.003,
+    "ece": 0.01
+  },
+  "governance_status": "frozen",
+  "official_test_policy": "Consumed once for final evaluation; normal lifecycle workflows do not load official test files or labels."
+}

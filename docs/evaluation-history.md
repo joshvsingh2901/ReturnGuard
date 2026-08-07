@@ -33,3 +33,12 @@ Stage 3 freeze spec, all official training events, training-fitted
 preprocessing, 659 fixed rounds, and one test-probability generation. No
 calibrator was fitted, A4 was not evaluated, and the results cannot reopen
 model selection. See [final-test-evaluation.md](final-test-evaluation.md).
+
+## Lifecycle protection
+
+Stage 4 treats the test role as consumed. Normal rebuild and CI paths verify
+only the three training files and cannot call the final evaluator. Historical
+MLflow evidence is imported from the committed JSON reports only. An
+exceptional evaluator rerun requires a CLI flag, an environment flag, and a
+documented reason, and writes to a separate attempt directory rather than
+overwriting canonical reports.

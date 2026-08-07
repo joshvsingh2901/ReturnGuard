@@ -49,6 +49,9 @@ reports/shap_cache/
 reports/*.npy
 reports/*.npz
 mlruns/
+.mlflow/
+reports/reproducibility/
+reports/final_test_attempts/
 
 # Logs
 *.log

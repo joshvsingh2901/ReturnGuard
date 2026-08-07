@@ -1,18 +1,30 @@
-# Model Card — ReturnGuard Stage 3
+# Model Card — ReturnGuard `returnguard-a3-v1`
 
 ## Status
 
-The frozen research model of record is **A3**: 41 approved features and 659
-fixed boosting rounds. Its held-out performance evaluation with prior aggregate
+The frozen research model of record is **A3**, semantic version
+`returnguard-a3-v1`: 41 approved features and 659 fixed boosting rounds. Its held-out performance evaluation with prior aggregate
 test inspection gives ROC-AUC 0.656798, log loss 0.648265, and Brier 0.228614.
 These results do not change model selection. A4 remains an experimental
 challenger because its frequency features cannot be proven point-in-time valid
 without timestamps, despite its developmental 0.666866 ROC-AUC.
 
+Lifecycle provenance is recorded in
+[`artifacts/manifests/returnguard-a3-v1.json`](../artifacts/manifests/returnguard-a3-v1.json):
+dataset version `asos-graphreturns-osf-c793h-v1`, feature-manifest hash
+`75834b5b656209a0266d8f5073946c4493d10ec738a71014d635c0851ca16404`, and
+freeze-spec hash `44893679b2145474167717befc53c89e68e8ec0e0d69131afd1619f31c69508f`.
+The local MLflow registered model is `returnguard-a3`; explicit governance
+assigns its `model-of-record` alias.
+
 ## Intended use
 
 Rank item-purchase return risk within the returner-enriched ASOS research
 population. The output is not a merchant-wide probability of return.
+
+It must not be used for merchant-wide pricing, eligibility, customer
+profiling, automated adverse decisions, causal explanation, or as a calibrated
+probability outside this dataset family.
 
 ## Input policy
 
@@ -59,3 +71,17 @@ conditional rather than merchant-wide probabilities.
 See [evaluation-history.md](evaluation-history.md). Test labels/statistics
 were inspected during audit. The one predeclared frozen-A3 performance
 evaluation is now complete; see [final-test-evaluation.md](final-test-evaluation.md).
+
+## Reproducibility and artifact provenance
+
+Run `.venv/bin/python scripts/reproduce_model.py --profile full` to verify the
+training-data hashes, frozen specification, deterministic split, validation
+metrics, composite artifact reload, and safe reference predictions. The command
+does not load official test events or labels. Local MLflow owns rebuilt model
+binaries; Git tracks the manifests and small reference fixture only.
+
+The project requires semantic reproducibility: configuration, feature order,
+data identity, metrics, and fixed reference predictions must meet declared
+tolerances. Byte-identical XGBoost/joblib files are recorded when practical but
+are not required across platforms and serializer builds. See
+[stage4-mlops.md](stage4-mlops.md).

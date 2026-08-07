@@ -5,13 +5,16 @@ compute official ASOS test model performance. It explains and audits the fixed
 Stage 2 A3 and A4 configurations on a deterministic sample of the
 training-derived primary validation fold.
 
-## Evaluation posture
+## Evaluation posture (historical Stage 3 state)
 
 The ASOS test files were structurally inspected during Stage 0, including
-labels and aggregate statistics. Test model performance remains uncomputed.
+labels and aggregate statistics. At the time Stage 3 was written, test model
+performance remained uncomputed.
 Primary-validation results are developmental because Stage 2 repeatedly
 reported them; Stage 3 uses them for descriptive model understanding rather
-than confirmatory claims.
+than confirmatory claims. The subsequent one-shot frozen-A3 evaluation is
+documented separately in [final-test-evaluation.md](final-test-evaluation.md)
+and did not alter these Stage 3 decisions.
 
 ## Explained models
 

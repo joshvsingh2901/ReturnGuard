@@ -68,8 +68,9 @@ Because the dataset contains no event-level timestamps, it is not currently poss
 - A custom validation set must be created for model selection (e.g., by holding out 20% of training events randomly, or by treating some customers as a holdout group)
 
 The official test files were inspected during Stage 0 for labels, aggregate
-statistics, schema, and cold-start structure. No model performance has been
-computed on test events; see `docs/evaluation-history.md` for the distinction.
+statistics, schema, and cold-start structure. One predeclared frozen-A3 model
+performance evaluation was later completed; it cannot reopen model selection.
+See `docs/evaluation-history.md` and `docs/final-test-evaluation.md`.
 
 ---
 

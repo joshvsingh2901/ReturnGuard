@@ -68,6 +68,20 @@ def final_xgb_params_from_freeze(freeze_spec: dict) -> dict:
     return params
 
 
+def validate_final_feature_manifest(manifest: dict, freeze_spec: dict) -> None:
+    """Require the fitted transformed-feature manifest to equal frozen A3."""
+    validate_a3_freeze_spec(freeze_spec)
+    if manifest.get("manifest_hash") != freeze_spec["feature_manifest_hash"]:
+        raise ValueError("Final-training feature manifest does not match the freeze spec")
+    if manifest.get("feature_count") != 41:
+        raise ValueError("Frozen A3 must have exactly 41 approved features")
+    names = {entry["transformed_feature"] for entry in manifest.get("entries", [])}
+    if names & FREQUENCY_FEATURE_NAMES:
+        raise ValueError("Frozen A3 must not contain product-frequency features")
+    if any("hash(" in name or TARGET_COL in name for name in names):
+        raise ValueError("Raw identifier or target reached final A3 feature matrix")
+
+
 def train_frozen_a3_on_training_events(train_df: pd.DataFrame, freeze_spec: dict) -> FrozenA3Fit:
     """Fit preprocessing and fixed-round A3 using official training rows only."""
     validate_a3_freeze_spec(freeze_spec)
@@ -81,14 +95,7 @@ def train_frozen_a3_on_training_events(train_df: pd.DataFrame, freeze_spec: dict
     X_train = np.asarray(pipeline.fit_transform(train_features), dtype=np.float32)
     feature_names = get_feature_names(pipeline.named_steps["preprocess"])
     manifest = build_feature_manifest(feature_names, FINAL_MODEL_NAME)
-    if manifest["feature_manifest_hash"] != freeze_spec["feature_manifest_hash"]:
-        raise ValueError("Final-training feature manifest does not match the freeze spec")
-    if manifest["feature_count"] != 41:
-        raise ValueError("Frozen A3 must have exactly 41 approved features")
-    if set(feature_names) & FREQUENCY_FEATURE_NAMES:
-        raise ValueError("Frozen A3 must not contain product-frequency features")
-    if any("hash(" in name or TARGET_COL in name for name in feature_names):
-        raise ValueError("Raw identifier or target reached final A3 feature matrix")
+    validate_final_feature_manifest(manifest, freeze_spec)
 
     fitted_params = final_xgb_params_from_freeze(freeze_spec)
     model = XGBClassifier(**fitted_params)

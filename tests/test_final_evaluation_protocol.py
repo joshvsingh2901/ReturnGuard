@@ -15,6 +15,7 @@ from ml.evaluation.final_protocol import (
     final_xgb_params_from_freeze,
     predeclared_test_slices,
     transform_test_with_train_fitted_pipeline,
+    validate_final_feature_manifest,
     validate_a3_freeze_spec,
 )
 from ml.explainability.grouping import FREQUENCY_FEATURE_NAMES
@@ -49,6 +50,7 @@ def test_stage3_manifest_matches_freeze_and_has_no_frequency_features(freeze_spe
     assert manifest["feature_count"] == 41
     assert not names & FREQUENCY_FEATURE_NAMES
     assert not any("hash(" in name or TARGET_COL in name for name in names)
+    validate_final_feature_manifest(manifest, freeze_spec)
 
 
 def test_freeze_validation_fails_closed_on_frequency_policy(freeze_spec):

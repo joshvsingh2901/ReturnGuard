@@ -19,9 +19,13 @@ still learn to detect (see ml.evaluation.probe for the diagnostic that
 verifies this).
 """
 
+import hashlib
+
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
+
+from ml.data.schema import EVENT_CUST_COL
 
 CUSTOMER_COLS = ["yearOfBirth", "isMale", "premier", "shippingCountry"]
 
@@ -42,12 +46,15 @@ class DonorImputer(BaseEstimator, TransformerMixin):
     unknown" case.
 
     transform(X): for each row with a fully-missing customer node, copies
-    all four CUSTOMER_COLS values from ONE donor row, drawn with a fixed
-    seed from the pool built in fit(). For rows where only yearOfBirth is
-    missing (the sentinel case; the other three fields are real), fills
-    yearOfBirth alone with the train-fold median — this is a real profile
-    with one unknown field, not the node-missing artifact, so it does not
-    need joint donor treatment.
+    all four CUSTOMER_COLS values from ONE donor row. The donor index is a
+    stable hash of the customer ID and random_state, rather than a sequence
+    of random draws. This makes the imputation invariant to transform batch
+    size and row ordering, and gives repeated events for the same missing
+    customer a consistent synthetic profile. For rows where only
+    yearOfBirth is missing (the sentinel case; the other three fields are
+    real), fills yearOfBirth alone with the train-fold median — this is a
+    real profile with one unknown field, not the node-missing artifact, so
+    it does not need joint donor treatment.
 
     fit() must only ever be called with a training fold — this class
     performs no internal train/val splitting; the caller (a Pipeline, or
@@ -71,6 +78,28 @@ class DonorImputer(BaseEstimator, TransformerMixin):
         self.year_median_ = X.loc[X["isMale"].notna(), "yearOfBirth"].median()
         return self
 
+    def _stable_donor_indices(self, X: pd.DataFrame, node_missing: pd.Series) -> np.ndarray:
+        """Map each missing customer to one donor independently of row order.
+
+        The joined event frame contains the hashed customer ID even when the
+        customer node itself is absent. Using that ID both avoids batch-order
+        dependent inference and keeps all events from the same missing
+        customer internally consistent. The index fallback exists only for
+        minimal synthetic fixtures that omit the event key.
+        """
+        if EVENT_CUST_COL in X.columns:
+            identities = X.loc[node_missing, EVENT_CUST_COL]
+        else:
+            identities = X.index[node_missing]
+
+        n_donors = len(self.donor_pool_)
+        donor_indices = []
+        for identity in identities:
+            payload = f"{self.random_state}|{identity}".encode("utf-8")
+            digest = hashlib.blake2b(payload, digest_size=8).digest()
+            donor_indices.append(int.from_bytes(digest, "little") % n_donors)
+        return np.asarray(donor_indices, dtype=np.int64)
+
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         X = X.copy()
         # If every row in this batch happens to be missing shippingCountry
@@ -84,8 +113,7 @@ class DonorImputer(BaseEstimator, TransformerMixin):
         n_missing = int(node_missing.sum())
 
         if n_missing > 0:
-            rng = np.random.default_rng(self.random_state)
-            donor_idx = rng.integers(0, len(self.donor_pool_), size=n_missing)
+            donor_idx = self._stable_donor_indices(X, node_missing)
             donor_rows = self.donor_pool_.iloc[donor_idx]
             for col in CUSTOMER_COLS:
                 X.loc[node_missing, col] = donor_rows[col].to_numpy()

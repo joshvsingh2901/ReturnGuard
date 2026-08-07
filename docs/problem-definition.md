@@ -61,11 +61,15 @@ This limitation should be documented prominently in any model card or evaluation
 
 ## Evaluation Consideration: No Timestamps
 
-Because the dataset contains no event-level timestamps, it is not currently possible to construct a proper chronological train/validation/test split from first principles. The pre-existing train/test split supplied by the dataset authors is used, but:
+Because the dataset contains no event-level timestamps, it is not currently possible to construct a proper chronological train/validation/test split from first principles. The pre-existing train/test split supplied by the dataset authors is reserved for a later held-out model-performance evaluation, but:
 
 - The split methodology is not documented
 - Whether it is chronological is UNKNOWN
 - A custom validation set must be created for model selection (e.g., by holding out 20% of training events randomly, or by treating some customers as a holdout group)
+
+The official test files were inspected during Stage 0 for labels, aggregate
+statistics, schema, and cold-start structure. No model performance has been
+computed on test events; see `docs/evaluation-history.md` for the distinction.
 
 ---
 

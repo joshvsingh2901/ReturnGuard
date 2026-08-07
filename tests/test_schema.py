@@ -9,13 +9,17 @@ from ml.data.schema import (
     BINARY_FEATURES,
     CATEGORICAL_FEATURES,
     CUSTOMER_SAFE_FEATURES,
+    EXCLUDED_DIRECT_ID_COLUMNS,
     LEAKY_COLUMNS,
     LEAKY_CUSTOMER_COLUMNS,
     LEAKY_PRODUCT_COLUMNS,
+    MODEL_EXCLUDED_COLUMNS,
     NUMERIC_FEATURES,
     NUMERIC_FEATURES_PRICE,
     PRODUCT_SAFE_FEATURES_STRICT,
     PRODUCT_SAFE_FEATURES_WITH_PRICE,
+    REDUNDANT_DUMMY_COLUMNS,
+    TARGET_DERIVED_LEAKY_COLUMNS,
     TARGET_COL,
 )
 
@@ -73,3 +77,10 @@ def test_all_return_code_columns_are_leaky():
     for suffix in "ABCDEFGHIJKL":
         assert f"customerId_level_return_code_{suffix}" in LEAKY_CUSTOMER_COLUMNS
         assert f"variantID_level_return_code_{suffix}" in LEAKY_PRODUCT_COLUMNS
+
+
+def test_excluded_column_categories_have_clear_semantics():
+    assert set(TARGET_DERIVED_LEAKY_COLUMNS).issubset(MODEL_EXCLUDED_COLUMNS)
+    assert set(REDUNDANT_DUMMY_COLUMNS).issubset(MODEL_EXCLUDED_COLUMNS)
+    assert set(EXCLUDED_DIRECT_ID_COLUMNS).issubset(MODEL_EXCLUDED_COLUMNS)
+    assert LEAKY_COLUMNS == MODEL_EXCLUDED_COLUMNS  # legacy compatibility alias

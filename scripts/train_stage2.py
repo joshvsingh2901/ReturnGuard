@@ -15,10 +15,10 @@ fold used throughout Stage 1:
   A5  Tuned re-fit of whichever of A2-A4 scores best on the EARLY-STOP
       fold (never primary validation) — a small fixed grid, no Optuna.
 
-Fold discipline: every rung fits on inner_train, early-stops on
-early_stop, and is evaluated ONCE on primary_val. Rung/hyperparameter
-selection (for A5) uses early_stop only. Primary validation never
-influences any decision — only final reporting.
+Fold discipline: every rung fits on inner_train and early-stops on
+early_stop. Rung/hyperparameter selection (for A5) uses early_stop only.
+Primary-validation metrics are calculated for each rung and are therefore
+developmental reporting rather than pristine confirmatory evidence.
 
 Never loads event_table_testing.p or any *_testing.p file.
 

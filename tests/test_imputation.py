@@ -63,6 +63,31 @@ def test_deterministic_with_fixed_seed():
     assert out1.equals(out2)
 
 
+def test_donor_assignment_is_invariant_to_row_order_and_batching():
+    """A missing customer's donor must not change with inference batching."""
+    train = pd.DataFrame({
+        "hash(customerId)": [10, 11, 12, 13],
+        "yearOfBirth": [1980.0, 1990.0, 2000.0, 1970.0],
+        "isMale": [1.0, 0.0, 1.0, 0.0],
+        "premier": [0.0, 1.0, 0.0, 1.0],
+        "shippingCountry": ["A", "B", "C", "D"],
+    })
+    target = pd.DataFrame({
+        "hash(customerId)": [100, 101, 102, 103],
+        "yearOfBirth": [np.nan] * 4,
+        "isMale": [np.nan] * 4,
+        "premier": [np.nan] * 4,
+        "shippingCountry": [np.nan] * 4,
+    })
+    imp = DonorImputer(random_state=7).fit(train)
+    whole = imp.transform(target)
+    batched = pd.concat([imp.transform(target.iloc[:2]), imp.transform(target.iloc[2:])])
+    reordered = imp.transform(target.iloc[::-1]).loc[target.index]
+
+    assert whole[CUSTOMER_COLS].equals(batched[CUSTOMER_COLS])
+    assert whole[CUSTOMER_COLS].equals(reordered[CUSTOMER_COLS])
+
+
 def test_donor_pool_built_from_fit_data_only(synthetic_df_with_missing):
     """fit() must only see the fold passed to it — donor pool size and
     contents must not depend on any data outside that fold."""

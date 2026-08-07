@@ -2,7 +2,7 @@
 
 Predict whether a fashion e-commerce item will be returned.
 
-**Current stage**: Stage 2 — XGBoost, Feature Engineering, Missing-Node Artifact Defense (complete)
+**Current stage**: Stage 3 — Explainability, Governance, and Calibration Policy (complete)
 
 ---
 
@@ -16,7 +16,7 @@ The project is built to demonstrate strong ML engineering practices:
 - reproducible preprocessing
 - feature engineering
 - model evaluation and probability calibration
-- explainability — planned Stage 3
+- explainability and feature governance
 - MLOps (MLflow) — planned Stage 4
 - FastAPI model serving — planned Stage 5
 - Next.js frontend — planned Stage 6
@@ -63,10 +63,14 @@ Raw data files are excluded from git via `.gitignore`.
 ## Setup
 
 ```bash
-pip install -r requirements.txt
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt -c constraints-stage3.txt
 ```
 
-Requires Python 3.10+. The pickle files were created with pandas 1.x; a compatibility shim (`ml/data/compat.py`) handles loading them under pandas 2.x.
+The validated Stage 3 environment uses Python 3.9, XGBoost 2.1.4, and SHAP
+0.47.2; the constraint file makes that analysis reproducible. The pickle files
+were created with pandas 1.x; a compatibility shim (`ml/data/compat.py`) handles
+loading them under pandas 2.x.
 
 ---
 
@@ -87,7 +91,7 @@ python scripts/build_dataset.py    # join event/customer/product tables, compute
 python scripts/train_baseline.py   # train trivial baselines + LR-A + LR-B, write reports/
 ```
 
-Outputs land in `reports/`: `stage1_metrics.json`, calibration plots, and the fitted model pipelines (all gitignored — regenerable). See [docs/stage1-baseline.md](docs/stage1-baseline.md) for full results and methodology.
+Outputs land in `reports/`: metrics JSON and curated calibration plots are retained as portfolio evidence; fitted model pipelines are gitignored and regenerable. See [docs/stage1-baseline.md](docs/stage1-baseline.md) for full results and methodology.
 
 ---
 
@@ -97,7 +101,7 @@ Outputs land in `reports/`: `stage1_metrics.json`, calibration plots, and the fi
 python scripts/train_stage2.py     # requires Stage 1's build_dataset.py to have run first
 ```
 
-~30–40 minutes (a 6-config hyperparameter grid dominates the runtime). Trains XGBoost through an ablation ladder (contaminated diagnostic → honest donor-imputed baseline → +derived features → +frequency features → tuning) on the identical Stage 1 customer-grouped split, plus a leakage probe that measures whether the customer missing-node artifact is exploitable. Outputs land in `reports/`: `stage2_metrics.json`, a calibration plot, and the fitted feature pipeline + XGBoost model (all gitignored — regenerable). See [docs/stage2-gbdt.md](docs/stage2-gbdt.md) for full results and methodology.
+~30–40 minutes (a 6-config hyperparameter grid dominates the runtime). Trains XGBoost through an ablation ladder (contaminated diagnostic → donor-imputed baseline → +derived features → +frequency features → tuning) on the Stage 1 customer-grouped development harness, plus a leakage probe that measures whether the customer missing-node artifact is exploitable. Metrics JSON and curated plots are retained; fitted binaries are gitignored and regenerable. See [docs/stage2-gbdt.md](docs/stage2-gbdt.md) for full results and methodology.
 
 ---
 
@@ -107,10 +111,26 @@ python scripts/train_stage2.py     # requires Stage 1's build_dataset.py to have
 pytest tests/ -v
 ```
 
-128 tests covering:
+148 tests cover:
 - Stage 0: raw file presence, DataFrame types, required columns, binary target, schema consistency, known duplicate-column defects
 - Stage 1: leakage-safe feature schema, join correctness (row-count preservation, coverage rates), deterministic customer-grouped splitting, preprocessing (sentinel cleaning, unseen categories, missing-node handling), model behavior (probability validity, convergence), metrics (closed-form baseline checks, perfect-prediction fixtures), calibration binning, and cold-start slice evaluation
 - Stage 2: donor imputation (joint sampling, determinism, train-fold-only fitting), derived price features (hand-calculated formulas, train-only statistics, unseen-category fallback), frequency encoding (train-fold-only counts, NaN-vs-zero semantics, no customer-ID frequency feature), the leakage probe (synthetic detectability regression tests), the three-way early-stopping split (byte-identical primary_val to Stage 1, fold disjointness), and XGBoost pipeline behavior (probability validity, determinism, early stopping)
+- Stage 3: deterministic representative SHAP sampling and grouping, raw-margin additivity (including early-stopping tree-range alignment), explanation privacy contracts, feature governance, calibration diagnostics, and documented evaluation-history controls
+
+---
+
+## How to Run Stage 3
+
+```bash
+.venv/bin/python scripts/run_stage3.py
+```
+
+This re-fits the frozen A3 and A4 development configurations solely because
+Stage 3 repairs the donor-imputation inference-order defect; it does not tune
+them. It never loads or evaluates official ASOS test model performance. The
+script produces reproducible development-only SHAP, calibration, missingness,
+and governance reports in `reports/`; fitted binaries are ignored because they
+are regenerable.
 
 ---
 
@@ -126,10 +146,15 @@ ReturnGuard/
 │   ├── leakage-audit.md      # Feature-by-feature leakage classification
 │   ├── problem-definition.md # Formal problem statement
 │   ├── stage1-baseline.md    # Stage 1 methodology, results, and reasoning
-│   └── stage2-gbdt.md        # Stage 2 methodology, results, and reasoning
+│   ├── stage2-gbdt.md        # Stage 2 methodology, results, and reasoning
+│   ├── stage3-methodology.md # Stage 3 methods, results, and decisions
+│   ├── model-card.md         # Model-of-record constraints and intended use
+│   └── evaluation-history.md # Test-inspection and validation-use disclosure
 ├── ml/
 │   ├── data/          # schema, loaders, joins, splits, pandas compat shim
 │   ├── features/      # preprocessing (LR + GBDT), donor imputation, derived/frequency features
+│   ├── explainability/ # deterministic sampling, Tree SHAP, explanation contracts
+│   ├── governance/    # feature manifest and frozen-model specification
 │   ├── models/        # trivial baselines, Logistic Regression, XGBoost
 │   └── evaluation/    # metrics, calibration, cold-start slicing, leakage probe
 ├── notebooks/         # Exploratory notebooks (empty — logic lives in ml/ and scripts/)
@@ -138,7 +163,8 @@ ReturnGuard/
 │   ├── audit_dataset.py   # Stage 0 dataset audit script
 │   ├── build_dataset.py   # Stage 1 join + split builder
 │   ├── train_baseline.py  # Stage 1 training + evaluation
-│   └── train_stage2.py    # Stage 2 ablation ladder + leakage probe
+│   ├── train_stage2.py    # Stage 2 ablation ladder + leakage probe
+│   └── run_stage3.py      # Stage 3 development-only analysis and governance
 ├── tests/
 ├── .gitignore
 ├── README.md
@@ -147,11 +173,14 @@ ReturnGuard/
 
 ---
 
-## Current Limitation
+## Current Limitations
 
-No model beyond an untuned-hyperparameter XGBoost (A5 tuning found the default configuration already near the plateau — see below) has been trained. Stage 2 establishes a stronger leakage-conscious floor — not a fully optimized model, and no explainability tooling exists yet.
+Stage 3 establishes A3 as the conservative model-of-record freeze candidate,
+not a merchant deployment model. A4 remains an experimental challenger. The
+project has no temporal validation, merchant-representative labels, or
+point-in-time product exposure data.
 
-Key findings that shape both what Stage 1+2 built and what Stage 3 should do:
+Key findings that shape the model-of-record boundary:
 
 - **Target leakage, confirmed and worse than first suspected**: product-side return/sales aggregates (`returnsPerProduct`, `productReturnRate`, `salesPerProduct`) are byte-identical between the training and test node files — the training file's aggregate already contains test-period outcomes. Customer-side aggregates (`returnsPerCustomer`, `customerReturnRate`, `salesPerCustomer`) are recomputed per split (same-window leakage). All are excluded; see [docs/leakage-audit.md](docs/leakage-audit.md).
 - **Target encoding evaluated and rejected**: without event timestamps, no fold construction can prove a target-encoding row precedes the row being scored — it would functionally reconstruct the banned `productReturnRate` under different bookkeeping. Fold-local, target-free frequency encoding was used instead.
@@ -161,16 +190,25 @@ Key findings that shape both what Stage 1+2 built and what Stage 3 should do:
 - **Biased sample**: only customers with at least one return are included (~55% measured return rate vs. 20–40% typical for real e-commerce). No probability calibrator has been fit — deliberately, since fitting one now would calibrate to the wrong population.
 - **Partial anonymization**: `brandDesc`/`productType` each leak one real, un-anonymized value (`Pull&Bear`, `Jeans`).
 
-See [docs/stage1-baseline.md](docs/stage1-baseline.md) and [docs/stage2-gbdt.md](docs/stage2-gbdt.md) for full results.
+See [docs/stage1-baseline.md](docs/stage1-baseline.md),
+[docs/stage2-gbdt.md](docs/stage2-gbdt.md), and
+[docs/stage3-methodology.md](docs/stage3-methodology.md) for full results.
 
 ---
 
-## Planned Next Stage
+## Stage 3 Outcome
 
-**Stage 3 — Explainability and Calibration Measurement**
+**Stage 3 — Explainability, Governance, and Calibration Policy**
 
-Stage 2's hyperparameter tuning plateaued (best grid config beat the default by only +0.0007 AUC, inside the noise threshold) while feature engineering moved the needle substantially (+0.013 AUC from derived + frequency features) — evidence that remaining headroom in this dataset is in features and understanding, not model capacity. Stage 3 should:
+Stage 2's hyperparameter tuning plateaued (best grid config beat the default by only +0.0007 AUC, inside the noise threshold) while feature engineering moved the needle substantially (+0.013 AUC from derived + frequency features) — evidence that remaining work was in model understanding and governance rather than model capacity. Stage 3:
 
-- Add SHAP (`TreeExplainer`) over the final Stage 2 model, both as an interpretability deliverable and as a second, independent leakage audit — attributions should concentrate on genuinely safe features, and neither missing-node pathway should surface as a top driver
-- Measure calibration more rigorously and confront the returners-only population-shift problem directly rather than continuing to defer it — the population shift, not the calibrator's functional form, is the real question
-- Still no calibrator fitting until the population-shift question has an answer; still no test-split access
+- verified Tree SHAP against the exact early-stopped scoring tree range;
+- confirmed A3 and A4 development reproductions after repairing batch/order-
+  dependent customer donor selection;
+- retained A3 as the conservative candidate because A4’s large frequency
+  contribution is temporally unverifiable without timestamps;
+- measured, but did not fit, calibration because the returner-enriched sample
+  cannot yield merchant-wide probabilities; and
+- did not compute official ASOS test model performance.
+
+The official test files were inspected during dataset auditing, including aggregate label statistics and structure. Test model performance has not been used for fitting, model selection, or final evaluation. Stage 2 selected configurations with its inner early-stop fold, while repeatedly calculating primary-validation metrics; those validation results are developmental rather than pristine confirmatory evidence. See [docs/evaluation-history.md](docs/evaluation-history.md) and [docs/model-card.md](docs/model-card.md).

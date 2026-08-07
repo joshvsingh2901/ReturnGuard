@@ -1,0 +1,9 @@
+# Reproducible Stage 3 analysis environment, validated on macOS (Python 3.9).
+# Install with: pip install -r requirements.txt -c constraints-stage3.txt
+numpy==2.0.2
+pandas==2.3.3
+scikit-learn==1.6.1
+matplotlib==3.9.4
+xgboost==2.1.4
+shap==0.47.2
+pytest==8.4.2

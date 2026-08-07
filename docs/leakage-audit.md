@@ -73,7 +73,7 @@ summarized here for visibility.
 
 ## Summary
 
-The dataset supplies 77 raw columns across the three table types (event, customer, product). Of these, 6 are safe features used directly in the Stage 1 baseline, 30 supplied one-hot dummy columns are technically safe but not used (redundant with the raw columns Stage 1 encodes itself), 2 are suspicious and included only in an ablation variant (LR-B), and 21 are unsafe. The unsafe columns are all aggregated return statistics that encode the prediction target — several confirmed to leak test-period outcomes into training-split features (see Stage 1 Corrections above) — and must be excluded from any model trained on this data.
+The dataset supplies 77 physical raw columns across the three table types (event, customer, product). Of these, 6 are safe features used directly in the Stage 1 baseline, 30 supplied one-hot dummy columns are technically safe but not used, 2 high-cardinality identifiers are excluded as direct model inputs, and 2 price/discount fields are suspicious. There are 30 uniquely named target-derived unsafe columns (32 physical columns because each return-code `_D` appears twice). These unsafe columns encode target or post-outcome information and must be excluded from every model.
 
 ---
 
@@ -97,7 +97,7 @@ The dataset supplies 77 raw columns across the three table types (event, custome
 | `shippingCountry` | SAFE | Shipping destination is known at checkout (99.96% stable across splits). |
 | `premier` | SAFE | Membership tier is a known account attribute at purchase time. **Confirmed static**: 99.99% stable for customers present in both train and test node files — not an end-of-period snapshot. |
 | `Country_A` … `Country_I` | **NOT USED** | Supplied one-hot dummies for `shippingCountry` — a full 9-category one-hot, technically safe but redundant with the raw column Stage 1 encodes directly with a consistent `OneHotEncoder`. |
-| `salesPerCustomer` | **SUSPICIOUS** | Count of all purchases for this customer. The customer node tables are split by train/test period, meaning the test node table was likely computed over the **test period** — the same transactions being predicted. If this count includes the current transaction, it is leaky. Additionally, it may encode return outcome indirectly (higher sales volume customers may behave differently). Cannot confirm safe without knowing the exact computation window. **Exclude from baseline.** |
+| `salesPerCustomer` | **UNSAFE** | Count of all purchases for this customer. The customer node tables are recomputed per split, consistent with the same transactions being predicted. It is part of the same-window aggregate pathway as `returnsPerCustomer` and must be excluded. |
 | `returnsPerCustomer` | **UNSAFE** | Raw count of returns by this customer. If computed over the same transactions being predicted, it directly encodes the aggregate of the target variable across those transactions. Even if computed over an earlier window, including it in a model trained on transactions from that window inflates signal. `min = 1` confirms every customer in the dataset has at least one return — this is a selection-bias artifact, not a safe baseline statistic. |
 | `customerReturnRate` | **UNSAFE** | `returnsPerCustomer / salesPerCustomer`. This is the average return rate, directly derived from the prediction target. The training mean is 0.541 and test mean is 0.534, both very close to the event table return rate (55.3% train, 54.5% test), which is strong evidence that these aggregates were computed over the same transactions as the targets. **Critical leakage risk.** |
 | `customerId_level_return_code_A` … `_L` | **UNSAFE** | Proportions of return reason codes (A–L) used by this customer. Return codes are assigned **after** a return event. These encode the distribution of return reasons from historical or concurrent returns. Because return codes are post-return labels, including them is direct target leakage. Additionally, one reason code (`_D`) appears **twice** as a duplicate column — a data quality defect in the source file. |
@@ -144,9 +144,10 @@ The ~3-point gap between the implied and actual rates is consistent with within-
 | Class | Count | Columns |
 |-------|-------|---------|
 | SAFE (used) | 6 | `yearOfBirth`, `isMale`, `shippingCountry`, `premier`, `productType`, `brandDesc` |
-| SAFE (not used — redundant dummies) | 30 | `Country_A–I` (9), `Brand_A–G,I–K` (10), `productType_A–K` (11), plus `hash(supplierRef)`, `hash(productID)` (excluded as high-cardinality IDs, deferred to Stage 2) |
+| SAFE (not used — redundant dummies) | 30 | `Country_A–I` (9), `Brand_A–G,I–K` (10), `productType_A–K` (11) |
+| SAFE (not used — direct IDs excluded) | 2 | `hash(supplierRef)`, `hash(productID)`; direct use is excluded for high cardinality, while Stage 2 derives target-free frequency features |
 | SUSPICIOUS | 2 | `avgGbpPrice`, `avgDiscountValue` (global per-variant constants; included in LR-B only, ablated against LR-A) |
-| UNSAFE | 21 | `salesPerCustomer`, `returnsPerCustomer`, `customerReturnRate`, `customerId_level_return_code_A–L` (×2 D — 12 columns), `salesPerProduct`, `returnsPerProduct`, `productReturnRate`, `variantID_level_return_code_A–L` (×2 D — 12 columns) |
+| UNSAFE | 30 unique names / 32 physical columns | `salesPerCustomer`, `returnsPerCustomer`, `customerReturnRate`, `customerId_level_return_code_A–L` (one duplicated `_D` physical column), `salesPerProduct`, `returnsPerProduct`, `productReturnRate`, `variantID_level_return_code_A–L` (one duplicated `_D` physical column) |
 | UNKNOWN | 0 | — |
 | TARGET | 1 | `isReturned` |
 
@@ -173,7 +174,7 @@ Note: `salesPerCustomer` and `salesPerProduct` moved from SUSPICIOUS to UNSAFE i
 - `variantID_level_return_code_*` (all variants)
 - `isReturned` (this is the target, not a feature)
 
-This exact list is codified as `LEAKY_COLUMNS` in `ml/data/schema.py` and is enforced by `tests/test_schema.py::test_safe_features_disjoint_from_leaky_columns` and `tests/test_joins.py::test_no_leaky_columns_in_joined_frame`.
+`TARGET_DERIVED_LEAKY_COLUMNS` in `ml/data/schema.py` codifies the target-derived unsafe list. `MODEL_EXCLUDED_COLUMNS` additionally includes redundant source dummies and direct IDs, which are excluded for reasons other than target leakage. The boundaries are enforced by `tests/test_schema.py` and `tests/test_joins.py`.
 
 Any model that uses these columns will suffer from target leakage and will produce misleadingly high training metrics. The effect may be detectable at evaluation time only if train and test splits are properly separated — if they use the same period, inflated metrics will appear in both.
 

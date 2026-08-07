@@ -29,12 +29,12 @@ for two columns:
 All eight raw columns are classified SAFE or SUSPICIOUS in
 `docs/leakage-audit.md`; none is UNSAFE. The full leakage-exclusion list
 (`salesPerCustomer`, `returnsPerCustomer`, `customerReturnRate`,
-`salesPerProduct`, `returnsPerProduct`, `productReturnRate`, all
-`*_level_return_code_*` columns, and the supplied `Country_*`/`Brand_*`/
-`productType_*` one-hot dummies) is codified as `LEAKY_COLUMNS` in
-`ml/data/schema.py` and enforced by `tests/test_schema.py` and
-`tests/test_joins.py` — the feature set cannot silently drift to include a
-leaky column without a test failing.
+`salesPerProduct`, `returnsPerProduct`, `productReturnRate`, and all
+`*_level_return_code_*` columns) is codified as
+`TARGET_DERIVED_LEAKY_COLUMNS` in `ml/data/schema.py`. Redundant source
+dummies and direct high-cardinality IDs are separately excluded through
+`MODEL_EXCLUDED_COLUMNS`; tests enforce that the feature set cannot silently
+drift to include any prohibited source column.
 
 Supplied one-hot dummy columns are **not used** even though they are
 themselves leakage-safe: they use inconsistent construction (`Country_*`
@@ -437,10 +437,9 @@ python scripts/train_baseline.py
 pytest tests/ -v
 ```
 
-Outputs land in `reports/`: `stage1_metrics.json` (all numbers in this
-document), `calibration_lr_a.png`, `calibration_lr_b.png`,
-`lr_a_pipeline.joblib`, `lr_b_pipeline.joblib` (all gitignored —
-regenerable, not committed).
+Outputs land in `reports/`: metrics JSON and curated calibration plots are
+retained as small portfolio artifacts; fitted `.joblib` binaries are
+gitignored and regenerable.
 
 Both scripts are deterministic: two full reruns of the pipeline on this
 machine produced metrics identical to within 1e-9 (in practice, exactly

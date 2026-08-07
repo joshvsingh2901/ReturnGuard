@@ -212,10 +212,11 @@ validation, a textbook train/serve skew. Enforced by
 ## 7. Ablation Ladder Results
 
 All rungs fit on `inner_train` (957,665 rows), early-stopped on
-`early_stop` (136,957 rows), evaluated **once** on `primary_val` (274,511
-rows) — the identical fold Stage 1 used. Rung/hyperparameter selection
-used `early_stop` ROC-AUC exclusively; `primary_val` numbers below are
-reporting only, computed after selection was already decided.
+`early_stop` (136,957 rows), and reported on `primary_val` (274,511 rows)
+— the identical fold Stage 1 used. Rung/hyperparameter selection used
+`early_stop` ROC-AUC exclusively, but `primary_val` metrics were repeatedly
+computed and visible across rungs and tuning fits. They are developmental
+reporting rather than a one-shot confirmatory evaluation.
 
 | Rung | Config | primary_val ROC-AUC | LogLoss | Brier | n_features | Fit time |
 |---|---|---|---|---|---|---|
@@ -225,9 +226,10 @@ reporting only, computed after selection was already decided.
 | A3 | A2 + derived price features | 0.6548 | 0.6470 | 0.2281 | 41 | 50.0s |
 | **A4** | **A3 + frequency features** | **0.6666** | **0.6388** | **0.2246** | **44** | **71.1s** |
 
-**A4 is the best honest rung**, selected by `early_stop` ROC-AUC
-(0.6673 vs. A2's 0.6543, A3's 0.6554) before `primary_val` was ever
-consulted for this decision.
+**A4 is the best frequency-enhanced development rung**, selected
+programmatically by `early_stop` ROC-AUC (0.6673 vs. A2's 0.6543, A3's
+0.6554). Its frequency features remain SUSPICIOUS because their
+point-in-time exposure cannot be verified without timestamps.
 
 ### Derived features (A2 → A3): small, real gain
 
@@ -343,7 +345,7 @@ product attributes, not customer history.
 | With product node | 179,095 | 0.6890 |
 | Without product node | 95,416 | 0.6188 |
 
-The gap widened slightly relative to Stage 1's LR-B (0.66 vs. 0.59, a
+The gap narrowed slightly relative to Stage 1's LR-B (0.66 vs. 0.59, a
 0.073 gap) to 0.069 here — proportionally similar. The "without product
 node" slice still clears the prevalence baseline by a wide margin on
 demographics alone, and native NaN routing lets the model use whatever
@@ -390,9 +392,9 @@ imputed, uninformative product-feature value.
    routing handles this gracefully but cannot recover information that
    was never collected.
 6. **A5's negative result** (tuning plateaus around 0.667–0.668
-   regardless of depth/learning-rate) suggests the remaining headroom in
-   this dataset, if any, is in features rather than model capacity —
-   directly informing the Stage 3 recommendation below.
+regardless of depth/learning-rate) suggests the remaining headroom in
+this dataset, if any, is in features rather than model capacity —
+directly informing [the Stage 3 methodology](stage3-methodology.md).
 
 ---
 
@@ -412,9 +414,9 @@ python scripts/train_stage2.py   # ~30-40 minutes (6-config tuning grid dominate
 pytest tests/ -v
 ```
 
-Outputs land in `reports/`: `stage2_metrics.json` (all numbers in this
-document), `calibration_stage2_best.png`, `stage2_feature_pipeline.joblib`,
-`stage2_xgb_model.joblib` (all gitignored — regenerable, not committed).
+Outputs land in `reports/`: `stage2_metrics.json` and curated calibration
+plots are retained as small portfolio artifacts; fitted `.joblib` binaries
+are gitignored and regenerable.
 
 **Determinism**: verified by fitting the A4 configuration twice on the
 full real dataset and comparing predictions — **exactly bit-identical**

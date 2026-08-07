@@ -64,10 +64,13 @@ CATEGORICAL_FEATURES_PRODUCT = ["productType", "brandDesc"]
 CATEGORICAL_FEATURES = CATEGORICAL_FEATURES_CUSTOMER + CATEGORICAL_FEATURES_PRODUCT
 
 # ---------------------------------------------------------------------------
-# Columns that must NEVER appear in the feature matrix (target leakage)
+# Columns excluded from model features
 # ---------------------------------------------------------------------------
 
-LEAKY_CUSTOMER_COLUMNS = [
+# These columns are derived from the target or post-outcome return process.
+# They must never reach a model feature matrix.
+
+TARGET_DERIVED_LEAKY_CUSTOMER_COLUMNS = [
     "salesPerCustomer",
     "returnsPerCustomer",
     "customerReturnRate",
@@ -85,7 +88,7 @@ LEAKY_CUSTOMER_COLUMNS = [
     "customerId_level_return_code_L",
 ]
 
-LEAKY_PRODUCT_COLUMNS = [
+TARGET_DERIVED_LEAKY_PRODUCT_COLUMNS = [
     "salesPerProduct",
     "returnsPerProduct",
     "productReturnRate",
@@ -106,7 +109,7 @@ LEAKY_PRODUCT_COLUMNS = [
 # Supplied one-hot dummy columns — redundant with the raw categorical
 # columns we encode ourselves, and inconsistent in construction (some are
 # full dummies, some drop a reference category). Never used.
-SUPPLIED_DUMMY_COLUMNS = (
+REDUNDANT_DUMMY_COLUMNS = (
     [f"Country_{c}" for c in "ABCDEFGHI"]
     + [f"Brand_{c}" for c in "ABCDEFGIJK"]  # Brand_H absent from source
     + [f"productType_{c}" for c in "ABCDEFGHIJK"]
@@ -119,17 +122,32 @@ SUPPLIED_DUMMY_COLUMNS = (
 # precedes the row being scored. They remain excluded as direct
 # identifiers; Stage 2 instead derives fold-local, target-free FREQUENCY
 # features from them (see FREQUENCY_FEATURES below).
-EXCLUDED_ID_COLUMNS = ["hash(supplierRef)", "hash(productID)"]
+EXCLUDED_DIRECT_ID_COLUMNS = ["hash(supplierRef)", "hash(productID)"]
 
 PRODUCT_PARENT_ID_COL = "hash(productID)"
 SUPPLIER_ID_COL = "hash(supplierRef)"
 
-LEAKY_COLUMNS = (
-    LEAKY_CUSTOMER_COLUMNS
-    + LEAKY_PRODUCT_COLUMNS
-    + SUPPLIED_DUMMY_COLUMNS
-    + EXCLUDED_ID_COLUMNS
+TARGET_DERIVED_LEAKY_COLUMNS = (
+    TARGET_DERIVED_LEAKY_CUSTOMER_COLUMNS
+    + TARGET_DERIVED_LEAKY_PRODUCT_COLUMNS
 )
+
+# All raw columns excluded from a direct model matrix. This includes genuine
+# target leakage, redundant source dummies, and high-cardinality raw IDs.
+MODEL_EXCLUDED_COLUMNS = (
+    TARGET_DERIVED_LEAKY_COLUMNS
+    + REDUNDANT_DUMMY_COLUMNS
+    + EXCLUDED_DIRECT_ID_COLUMNS
+)
+
+# Backwards-compatible aliases retained for Stage 0–2 callers. New code and
+# documentation should use the explicit categories above rather than treating
+# every excluded column as target leakage.
+LEAKY_CUSTOMER_COLUMNS = TARGET_DERIVED_LEAKY_CUSTOMER_COLUMNS
+LEAKY_PRODUCT_COLUMNS = TARGET_DERIVED_LEAKY_PRODUCT_COLUMNS
+SUPPLIED_DUMMY_COLUMNS = REDUNDANT_DUMMY_COLUMNS
+EXCLUDED_ID_COLUMNS = EXCLUDED_DIRECT_ID_COLUMNS
+LEAKY_COLUMNS = MODEL_EXCLUDED_COLUMNS
 
 # ---------------------------------------------------------------------------
 # Known data-quality sentinels

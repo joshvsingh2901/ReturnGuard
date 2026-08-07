@@ -18,8 +18,8 @@
 ## Provenance
 
 - **Dataset**: ASOS GraphReturns (public research dataset)
-- **Source archive**: `c793h-osfstorage-archive.zip` (OSF / Open Science Framework)
-- **Stored at**: `data/raw/` (not committed to git)
+- **Source archive**: `c793h-osfstorage-archive.zip` (OSF / Open Science Framework; locally ignored, not committed)
+- **Extracted pickle files stored at**: `data/raw/` (not committed to git)
 - **Format**: Python pickle files created with pandas ~1.x
 
 ---

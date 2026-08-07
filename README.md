@@ -2,7 +2,7 @@
 
 Predict whether a fashion e-commerce item will be returned.
 
-**Current stage**: Stage 4 lifecycle and reproducibility foundations complete for frozen `returnguard-a3-v1`
+**Current stage**: Stage 5 FastAPI inference service complete for frozen `returnguard-a3-v1`
 
 ---
 
@@ -17,8 +17,8 @@ The project is built to demonstrate strong ML engineering practices:
 - feature engineering
 - model evaluation and probability calibration
 - explainability and feature governance
-- MLOps (MLflow) — planned Stage 4
-- FastAPI model serving — planned Stage 5
+- MLOps (MLflow) — Stage 4 complete
+- FastAPI model serving — Stage 5 complete
 - Next.js frontend — planned Stage 6
 
 ---
@@ -64,11 +64,11 @@ Raw data files are excluded from git via `.gitignore`.
 
 ```bash
 python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt -c constraints-stage4.txt
+.venv/bin/pip install -r requirements.txt -c constraints-stage5.txt
 ```
 
-The validated Stage 4 environment uses Python 3.9.6, XGBoost 2.1.4, SHAP
-0.47.2, and local MLflow; the constraint file makes the frozen lifecycle reproducible. The pickle files
+The validated serving environment uses Python 3.9.6, XGBoost 2.1.4, SHAP
+0.47.2, FastAPI 0.128.8, and local MLflow; the constraint file makes the frozen lifecycle reproducible. The pickle files
 were created with pandas 1.x; a compatibility shim (`ml/data/compat.py`) handles
 loading them under pandas 2.x.
 
@@ -109,7 +109,7 @@ python scripts/train_stage2.py     # requires Stage 1's build_dataset.py to have
 
 ```bash
 ruff check .
-pytest -m "not raw_training_data and not historical_test_data and not full_rebuild"
+pytest -m "not raw_training_data and not historical_test_data and not full_rebuild and not local_registry"
 ```
 
 The full suite covers:
@@ -117,11 +117,58 @@ The full suite covers:
 - Stage 1: leakage-safe feature schema, join correctness (row-count preservation, coverage rates), deterministic customer-grouped splitting, preprocessing (sentinel cleaning, unseen categories, missing-node handling), model behavior (probability validity, convergence), metrics (closed-form baseline checks, perfect-prediction fixtures), calibration binning, and cold-start slice evaluation
 - Stage 2: donor imputation (joint sampling, determinism, train-fold-only fitting), derived price features (hand-calculated formulas, train-only statistics, unseen-category fallback), frequency encoding (train-fold-only counts, NaN-vs-zero semantics, no customer-ID frequency feature), the leakage probe (synthetic detectability regression tests), the three-way early-stopping split (byte-identical primary_val to Stage 1, fold disjointness), and XGBoost pipeline behavior (probability validity, determinism, early stopping)
 - Stage 3: deterministic representative SHAP sampling and grouping, raw-margin additivity (including early-stopping tree-range alignment), explanation privacy contracts, feature governance, calibration diagnostics, and documented evaluation-history controls
+- Stage 5: FastAPI request validation, safe errors, vectorized inference, no-profile donor-routing controls, public explanation privacy, and an opt-in local-registry smoke test
 
 Tests requiring real ASOS training data are marked `raw_training_data`; tests
 that inspect the historical test files are additionally marked
 `historical_test_data`. They are intentionally excluded from normal lifecycle
 and CI commands.
+
+## How to Run the Stage 5 API
+
+Stage 5 serves the local MLflow model-of-record only. Create it first with the
+governed Stage 4 rebuild/registration workflow, then explicitly assign the
+`model-of-record` alias as documented in [docs/stage4-mlops.md](docs/stage4-mlops.md).
+Normal API operation never loads training data or official test labels.
+
+```bash
+.venv/bin/uvicorn backend.main:app --reload
+```
+
+Swagger/OpenAPI is available at `http://127.0.0.1:8000/docs`. The primary
+endpoints are `GET /health`, `GET /ready`, `GET /model`, `POST /predict`,
+`POST /predict/batch`, and `POST /explain`.
+
+```json
+{
+  "customer_context_key": "opaque-stable-token",
+  "customer_profile": {
+    "yearOfBirth": 1988,
+    "isMale": false,
+    "shippingCountry": "Country_A",
+    "premier": true
+  },
+  "product_profile": {
+    "productType": "Jeans",
+    "brandDesc": "Brand_A",
+    "avgGbpPrice": 54.99,
+    "avgDiscountValue": 15.0
+  }
+}
+```
+
+The response includes a deterministic 0–100 `risk_score`, data-quality
+context, safe model provenance, and the required methodology warning. It does
+not expose raw probabilities, SHAP values, feature names, or donor attributes.
+These are **dataset-conditional return-risk scores from a returner-enriched
+research sample, not merchant-wide calibrated return probabilities**. See
+[docs/stage5-api.md](docs/stage5-api.md) for the full contract.
+
+To test an already-created local model-of-record explicitly:
+
+```bash
+.venv/bin/pytest tests/api/test_local_registry_integration.py -m local_registry -q
+```
 
 ---
 
@@ -177,6 +224,7 @@ ReturnGuard/
 │   ├── stage1-baseline.md    # Stage 1 methodology, results, and reasoning
 │   ├── stage2-gbdt.md        # Stage 2 methodology, results, and reasoning
 │   ├── stage3-methodology.md # Stage 3 methods, results, and decisions
+│   ├── stage5-api.md          # Stage 5 frozen-model serving contract
 │   ├── model-card.md         # Model-of-record constraints and intended use
 │   └── evaluation-history.md # Test-inspection and validation-use disclosure
 ├── ml/
@@ -191,6 +239,7 @@ ReturnGuard/
 │   └── reference/     # small training-derived prediction reference fixture
 ├── notebooks/         # Exploratory notebooks (empty — logic lives in ml/ and scripts/)
 ├── reports/           # Generated metrics/plots/models (gitignored, regenerable)
+├── backend/            # Stage 5 FastAPI request contracts and frozen A3 serving adapter
 ├── scripts/
 │   ├── audit_dataset.py   # Stage 0 dataset audit script
 │   ├── build_dataset.py   # Stage 1 join + split builder
@@ -201,7 +250,8 @@ ReturnGuard/
 ├── .gitignore
 ├── README.md
 ├── requirements.txt
-└── constraints-stage4.txt
+├── constraints-stage4.txt
+└── constraints-stage5.txt
 ```
 
 ---

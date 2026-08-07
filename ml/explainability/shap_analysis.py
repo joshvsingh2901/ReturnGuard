@@ -47,16 +47,27 @@ def _prediction_booster(model):
     return booster[: best_iteration + 1]
 
 
-def compute_tree_shap(model, X: np.ndarray) -> ShapResult:
-    """Compute raw-margin Tree SHAP and verify model-space additivity."""
+def build_tree_explainer(model):
+    """Build a raw-margin explainer for the exact trees used at prediction."""
     try:
         import shap
     except ImportError as exc:  # pragma: no cover - dependency error is user-facing
         raise ImportError("Stage 3 requires the optional 'shap' dependency") from exc
 
+    return shap.TreeExplainer(_prediction_booster(model), model_output="raw")
+
+
+def compute_tree_shap(model, X: np.ndarray, *, explainer=None) -> ShapResult:
+    """Compute raw-margin Tree SHAP and verify model-space additivity.
+
+    ``explainer`` supports serving a prebuilt frozen-model explainer without
+    rebuilding it per request. Existing Stage 3 callers remain unchanged.
+    """
+
     # Explain the same best-iteration tree range that the sklearn wrapper
     # scores.  Passing the unsliced booster would silently include all trees.
-    explainer = shap.TreeExplainer(_prediction_booster(model), model_output="raw")
+    if explainer is None:
+        explainer = build_tree_explainer(model)
     values = np.asarray(explainer.shap_values(X), dtype=float)
     base_value = float(np.asarray(explainer.expected_value).reshape(-1)[0])
     raw_margin = np.asarray(model_raw_margin(model, X), dtype=float)

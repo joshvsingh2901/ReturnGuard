@@ -15,6 +15,6 @@ jobs:
           python-version: "3.9.6"
           cache: pip
       - run: python -m pip install --upgrade pip
-      - run: python -m pip install -r requirements.txt -c constraints-stage4.txt
+      - run: python -m pip install -r requirements.txt -c constraints-stage5.txt
       - run: ruff check .
-      - run: pytest -m "not raw_training_data and not historical_test_data and not full_rebuild"
+      - run: pytest -m "not raw_training_data and not historical_test_data and not full_rebuild and not local_registry"

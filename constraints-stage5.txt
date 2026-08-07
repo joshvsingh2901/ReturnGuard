@@ -1,0 +1,16 @@
+# Frozen ReturnGuard Stage 5 serving environment (Python 3.9).
+# Install with: pip install -r requirements.txt -c constraints-stage5.txt
+numpy==2.0.2
+pandas==2.3.3
+scikit-learn==1.6.1
+matplotlib==3.9.4
+xgboost==2.1.4
+shap==0.47.2
+joblib==1.5.2
+pytest==8.4.2
+mlflow==3.1.4
+ruff==0.12.11
+fastapi==0.128.8
+uvicorn==0.39.0
+pydantic==2.13.4
+httpx==0.28.1

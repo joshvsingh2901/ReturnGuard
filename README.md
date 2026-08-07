@@ -111,7 +111,7 @@ python scripts/train_stage2.py     # requires Stage 1's build_dataset.py to have
 pytest tests/ -v
 ```
 
-148 tests cover:
+The full suite covers:
 - Stage 0: raw file presence, DataFrame types, required columns, binary target, schema consistency, known duplicate-column defects
 - Stage 1: leakage-safe feature schema, join correctness (row-count preservation, coverage rates), deterministic customer-grouped splitting, preprocessing (sentinel cleaning, unseen categories, missing-node handling), model behavior (probability validity, convergence), metrics (closed-form baseline checks, perfect-prediction fixtures), calibration binning, and cold-start slice evaluation
 - Stage 2: donor imputation (joint sampling, determinism, train-fold-only fitting), derived price features (hand-calculated formulas, train-only statistics, unseen-category fallback), frequency encoding (train-fold-only counts, NaN-vs-zero semantics, no customer-ID frequency feature), the leakage probe (synthetic detectability regression tests), the three-way early-stopping split (byte-identical primary_val to Stage 1, fold disjointness), and XGBoost pipeline behavior (probability validity, determinism, early stopping)

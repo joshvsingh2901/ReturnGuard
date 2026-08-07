@@ -1,0 +1,55 @@
+{
+  "model_status": "MODEL_OF_RECORD_CONSERVATIVE_FREEZE_CANDIDATE",
+  "model_name": "A3",
+  "model_family": "XGBoost binary logistic",
+  "feature_policy": "A3 donor-imputed demographics, catalogue, suspicious price/discount, derived price; no frequency features",
+  "preprocessing": {
+    "customer_missingness": "stable customer-ID keyed joint donor imputation",
+    "product_categoricals": "explicit __MISSING__ category",
+    "product_numeric_missingness": "native XGBoost NaN routing",
+    "year_of_birth_sentinel": "1900 converted to NaN"
+  },
+  "xgboost_params": {
+    "objective": "binary:logistic",
+    "tree_method": "hist",
+    "device": "cpu",
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "n_estimators": 2000,
+    "max_depth": 6,
+    "learning_rate": 0.1,
+    "random_state": 42,
+    "n_jobs": 4,
+    "eval_metric": "logloss",
+    "early_stopping_rounds": 50
+  },
+  "development_training_split": {
+    "primary_validation": "customer-grouped deterministic MD5 buckets [0, 20)",
+    "inner_train": "customer MD5 buckets [30, 100)",
+    "early_stop": "customer MD5 buckets [20, 30)"
+  },
+  "final_training_procedure": {
+    "official_test_not_run": true,
+    "future_refit": "fit preprocessing and XGBoost on all training events using the frozen configuration and a predeclared fixed boosting-round count",
+    "fixed_boosting_rounds": 659
+  },
+  "calibration_policy": "none; raw scores remain dataset-conditional",
+  "explanation_policy": "Tree SHAP raw-margin explanations; user-facing return-risk factors are grouped and non-causal",
+  "evaluation_metrics": [
+    "ROC-AUC",
+    "PR-AUC",
+    "log loss",
+    "Brier",
+    "ECE",
+    "calibration-in-the-large",
+    "calibration slope"
+  ],
+  "slice_definitions": [
+    "product covered vs product missing",
+    "known vs new product relative to fitted training fold",
+    "original customer node present vs missing"
+  ],
+  "feature_manifest_hash": "75834b5b656209a0266d8f5073946c4493d10ec738a71014d635c0851ca16404",
+  "code_version": "5499bebef8955c0c2a80799f5e56e6aefca8f4f3",
+  "freeze_spec_hash": "44893679b2145474167717befc53c89e68e8ec0e0d69131afd1619f31c69508f"
+}

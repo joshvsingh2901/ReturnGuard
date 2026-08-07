@@ -1,0 +1,62 @@
+{
+  "model_of_record": "A3",
+  "model_of_record_status": "MODEL_OF_RECORD_CONSERVATIVE_FREEZE_CANDIDATE",
+  "experimental_challenger": "A4",
+  "experimental_challenger_status": "EXPERIMENTAL_CHALLENGER_TEMPORALLY_UNVERIFIABLE_FREQUENCY_FEATURES",
+  "decision_rationale": [
+    "A3 avoids product-frequency encodings while retaining the fixed donor-imputation defense.",
+    "A4 may improve development discrimination, but target-free frequency counts remain temporally unverifiable without timestamps.",
+    "No calibrator is fitted because scores are conditional on a returner-enriched research population.",
+    "Official test model performance remains uncomputed pending frozen-model protocol completion."
+  ],
+  "frequency_governance": {
+    "individual_mean_abs_shap": {
+      "num_prod__product_event_count": 0.08556826612554633,
+      "num_prod__supplier_event_count": 0.11282173762593123,
+      "num_prod__variant_event_count": 0.2246477508922224
+    },
+    "combined_per_row_mean_abs_shap": 0.19801623714042363,
+    "combined_per_row_mean_signed_shap": -0.004980355785789811,
+    "grouped_mean_abs_shap": 0.19801623714042363,
+    "grouped_attribution_share": 0.1837434068310989,
+    "grouped_rank": 2,
+    "strongest_stable_semantic_group_mean_abs_shap": 0.29303218273672116,
+    "frequency_in_local_top_three_rate": 0.836,
+    "influence_classification": "AUXILIARY",
+    "delta_by_variant_frequency_quintile": [
+      {
+        "bucket": "(-0.001, 1.0]",
+        "size": 3490,
+        "mean": 0.05352417060032615,
+        "median": 0.05653969943523407
+      },
+      {
+        "bucket": "(1.0, 2.0]",
+        "size": 1133,
+        "mean": 0.019864917587281747,
+        "median": 0.01650136709213257
+      },
+      {
+        "bucket": "(2.0, 4.0]",
+        "size": 1501,
+        "mean": 0.009181164210038055,
+        "median": 0.005225241184234619
+      },
+      {
+        "bucket": "(4.0, 10.0]",
+        "size": 1994,
+        "mean": -0.014600496685903972,
+        "median": -0.013321489095687866
+      },
+      {
+        "bucket": "(10.0, 382.0]",
+        "size": 1882,
+        "mean": -0.057814617435656704,
+        "median": -0.046217262744903564
+      }
+    ],
+    "governance_verdict": "Frequency features remain temporally unverifiable without timestamps, regardless of attribution magnitude. A4 remains experimental."
+  },
+  "calibration_policy": "NO_CALIBRATOR",
+  "test_evaluation_policy": "Run one predeclared held-out performance evaluation only after the frozen model spec and documentation are committed; do not use results for model selection."
+}

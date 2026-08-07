@@ -1,0 +1,42 @@
+feature,display_name,feature_family,mean_abs_shap
+cat_cust__shippingCountry_Country_E,Shipping country: Country E,shipping_country,0.259426553054899
+num_prod__price_rel_brand_median,Price relative to brand median,derived_price_features,0.12112541808042006
+cat_prod__productType_productType_B,Product type: productType_B,product_type,0.10357946527153254
+num_cust__yearOfBirth,Customer birth year,birth_year_customer_demographic,0.08258437791239658
+cat_prod__productType_productType_J,Product type: productType_J,product_type,0.06751634101578384
+num_prod__avgGbpPrice,Product price,price_discount,0.06333888352050562
+num_prod__discount_amount,Derived discount amount,derived_price_features,0.05799475335595052
+num_prod__price_rel_type_median,Price relative to product-type median,derived_price_features,0.05735094783231762
+num_prod__avgDiscountValue,Product discount value,price_discount,0.04062107604488392
+cat_prod__productType_Jeans,Product type: Jeans,product_type,0.039631212136347314
+bin__isMale,Customer gender indicator,customer_binary_attributes,0.03417423191056746
+cat_prod__brandDesc_Brand_K,Brand: Brand_K,brand,0.034130490655975246
+cat_prod__productType_productType_H,Product type: productType_H,product_type,0.0264964133214884
+cat_prod__brandDesc_Brand_B,Brand: Brand_B,brand,0.02287806549691468
+cat_prod__productType_productType_I,Product type: productType_I,product_type,0.01763060239510196
+cat_cust__shippingCountry_Country_G,Shipping country: Country G,shipping_country,0.016425171405258333
+cat_cust__shippingCountry_Country_D,Shipping country: Country D,shipping_country,0.015934578202302215
+cat_cust__shippingCountry_Country_B,Shipping country: Country B,shipping_country,0.01389787349434264
+cat_cust__shippingCountry_Country_F,Shipping country: Country F,shipping_country,0.01103046512187575
+bin__premier,Premier membership,customer_binary_attributes,0.009123738238632086
+cat_prod__productType_productType_G,Product type: productType_G,product_type,0.008980825027686433
+cat_cust__shippingCountry_Country_H,Shipping country: Country H,shipping_country,0.00872439556782474
+cat_prod__productType_productType_D,Product type: productType_D,product_type,0.00829897509793633
+cat_prod__brandDesc_Brand_G,Brand: Brand_G,brand,0.0071514141745350574
+cat_prod__productType_productType_A,Product type: productType_A,product_type,0.005423480530919414
+cat_cust__shippingCountry_Country_A,Shipping country: Country A,shipping_country,0.005270234216964104
+cat_prod__brandDesc_Brand_J,Brand: Brand_J,brand,0.004838751960688376
+cat_prod__brandDesc_Brand_E,Brand: Brand_E,brand,0.00482205968652803
+cat_cust__shippingCountry_Country_I,Shipping country: Country I,shipping_country,0.0034216348426434704
+cat_prod__brandDesc_Brand_F,Brand: Brand_F,brand,0.003078729186439409
+cat_prod__brandDesc_Brand_C,Brand: Brand_C,brand,0.0030231826636529947
+cat_prod__brandDesc_Brand_I,Brand: Brand_I,brand,0.002555736999083814
+cat_prod__brandDesc_Brand_A,Brand: Brand_A,brand,0.002127793060581371
+cat_prod__productType_productType_E,Product type: productType_E,product_type,0.002082369350118097
+cat_prod__productType_productType_F,Product type: productType_F,product_type,0.001853559192658122
+cat_prod__brandDesc_Brand_D,Brand: Brand_D,brand,0.0014182166247262331
+cat_prod__brandDesc_Pull&Bear,Brand: Pull&Bear,brand,0.0013913954172433023
+cat_cust__shippingCountry_Country_C,Shipping country: Country C,shipping_country,0.001389221833512056
+cat_prod__productType_productType_C,Product type: productType_C,product_type,0.0013722595528916372
+cat_prod__productType___MISSING__,Product profile unavailable,product_profile_missingness,0.0
+cat_prod__brandDesc___MISSING__,Product profile unavailable,product_profile_missingness,0.0

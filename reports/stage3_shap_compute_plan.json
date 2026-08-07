@@ -1,0 +1,8 @@
+{
+  "pilot_n": 1000,
+  "pilot_seconds_a3": 1.6391127090000026,
+  "projected_seconds_a3_a4": 32.78225418000005,
+  "selected_n": 10000,
+  "fallback_used": false,
+  "pilot_manifest_hash": "0374e5d7314d2daf5b3eaa4f103949162767fb560faf4e70cd70f8b8058bd0f7"
+}

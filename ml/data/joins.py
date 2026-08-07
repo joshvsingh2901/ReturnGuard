@@ -24,8 +24,11 @@ for the evidence behind these choices):
 import pandas as pd
 
 from ml.data.loaders import (
+    load_customer_test_safe_for_final_evaluation,
     load_customer_train_safe,
+    load_event_test_for_final_evaluation,
     load_event_train,
+    load_product_test_safe_for_final_evaluation,
     load_product_train_safe,
 )
 from ml.data.schema import (
@@ -46,19 +49,10 @@ def _validate_unique_ids(df: pd.DataFrame, id_col: str, label: str) -> None:
         )
 
 
-def build_joined_training_frame(raw_dir=None) -> pd.DataFrame:
-    """
-    Return the joined training frame: one row per training event, with
-    customer and product safe features attached where available.
-
-    Row count is guaranteed equal to len(event_table_training.p).
-    """
-    kwargs = {} if raw_dir is None else {"raw_dir": raw_dir}
-
-    events = load_event_train(**kwargs)
-    customers = load_customer_train_safe(**kwargs)
-    products = load_product_train_safe(**kwargs)
-
+def _join_events_with_safe_nodes(
+    events: pd.DataFrame, customers: pd.DataFrame, products: pd.DataFrame
+) -> pd.DataFrame:
+    """Join one event table to its matching safe customer/product nodes."""
     _validate_unique_ids(customers, CUSTOMER_ID_COL, "Customer")
     _validate_unique_ids(products, PRODUCT_ID_COL, "Product")
 
@@ -95,6 +89,35 @@ def build_joined_training_frame(raw_dir=None) -> pd.DataFrame:
         joined[col] = joined[col].fillna(MISSING_CATEGORY_TOKEN)
 
     return joined
+
+
+def build_joined_training_frame(raw_dir=None) -> pd.DataFrame:
+    """
+    Return the joined training frame: one row per training event, with
+    customer and product safe features attached where available.
+
+    Row count is guaranteed equal to len(event_table_training.p).
+    """
+    kwargs = {} if raw_dir is None else {"raw_dir": raw_dir}
+    return _join_events_with_safe_nodes(
+        load_event_train(**kwargs),
+        load_customer_train_safe(**kwargs),
+        load_product_train_safe(**kwargs),
+    )
+
+
+def build_joined_test_frame_for_final_evaluation(raw_dir=None) -> pd.DataFrame:
+    """Join official-test events only for the committed final evaluation.
+
+    This function intentionally has an explicit final-evaluation name so it
+    cannot be mistaken for an allowed Stage 1–3 development data path.
+    """
+    kwargs = {} if raw_dir is None else {"raw_dir": raw_dir}
+    return _join_events_with_safe_nodes(
+        load_event_test_for_final_evaluation(**kwargs),
+        load_customer_test_safe_for_final_evaluation(**kwargs),
+        load_product_test_safe_for_final_evaluation(**kwargs),
+    )
 
 
 def has_customer_node_mask(joined: pd.DataFrame) -> pd.Series:

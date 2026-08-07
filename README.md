@@ -1,148 +1,180 @@
 # ReturnGuard
 
-Predict whether a fashion e-commerce item will be returned.
+**End-to-end ML system for predicting fashion e-commerce return risk before purchase.**
 
-**Current stage**: Stage 6 Next.js frontend complete for frozen `returnguard-a3-v1`
+ReturnGuard takes customer and product information available at checkout, scores the purchase on a **0–100 relative return-risk scale**, and explains the model factors behind that prediction. The project was built as a production-style ML system rather than a notebook: leakage-safe feature engineering, frozen-model governance, SHAP explainability, reproducible MLflow lifecycle, FastAPI serving, and a Next.js merchant-facing UI.
 
----
+> **Model note:** ReturnGuard was trained on a returner-enriched ASOS research dataset. Scores are dataset-conditional risk signals, **not merchant-wide calibrated return probabilities**.
 
-## Project Goal
+## Highlights
 
-ReturnGuard predicts `P(item returned | information available at purchase time)` for individual item purchases on a fashion e-commerce platform.
+- **2.83M purchase events** across train and test data
+- **1.37M training events** used to build the frozen model of record
+- **0.6568 ROC-AUC** and **0.6829 PR-AUC** on the held-out official test evaluation
+- **0.2286 Brier score** with calibration slope **1.0012**
+- **~4 ms warm single-request inference** through FastAPI
+- Deterministic **MLflow model registry + reproducibility workflow**
+- **Tree SHAP** explanations with feature-governance and privacy safeguards
+- Full-stack demo with **FastAPI + Next.js + TypeScript**
 
-The project is built to demonstrate strong ML engineering practices:
-- leakage prevention
-- proper train/validation/test methodology
-- reproducible preprocessing
-- feature engineering
-- model evaluation and probability calibration
-- explainability and feature governance
-- MLOps (MLflow) — Stage 4 complete
-- FastAPI model serving — Stage 5 complete
-- Next.js frontend — Stage 6 complete
+## What ReturnGuard Does
 
----
+A merchant provides the customer and product information available at purchase time:
 
-## Dataset
-
-**ASOS GraphReturns** (public research dataset, OSF)
-
-Six pickle files representing a bipartite customer–product graph:
-
-| File | Description |
-|------|-------------|
-| `event_table_training.p` | 1.37M training purchase events |
-| `event_table_testing.p` | 1.46M test purchase events |
-| `customer_nodes_training.p` | 777K customer attribute rows (training period) |
-| `customer_nodes_testing.p` | 826K customer attribute rows (test period) |
-| `product_nodes_training.p` | 411K product variant attribute rows (training period) |
-| `product_nodes_testing.p` | 412K product variant attribute rows (test period) |
-
-**Important**: the dataset only includes customers who have made at least one return. The measured return rate (~55%) is higher than real-world rates and the model's predicted probabilities will need calibration before merchant-wide deployment.
-
----
-
-## How to Place Raw Data
-
-1. Download `c793h-osfstorage-archive.zip` from OSF
-2. Extract all six `.p` files into `data/raw/`:
-
-```
-data/raw/event_table_training.p
-data/raw/event_table_testing.p
-data/raw/customer_nodes_training.p
-data/raw/customer_nodes_testing.p
-data/raw/product_nodes_training.p
-data/raw/product_nodes_testing.p
+```text
+Customer context + Product context
+              ↓
+      Frozen preprocessing
+              ↓
+         XGBoost A3
+              ↓
+     Return Risk Score
+              ↓
+ Optional grouped explanation
 ```
 
-Raw data files are excluded from git via `.gitignore`.
+The UI returns a score such as:
 
----
+```text
+Return Risk Score
+71 / 100
+```
 
-## Setup
+The score is intentionally presented **without a percent sign or Low/Medium/High business bands** because the dataset does not support merchant-wide probability calibration or business-optimized thresholds.
+
+## System Architecture
+
+```mermaid
+flowchart LR
+    A[Merchant Scenario\nNext.js + TypeScript] --> B[FastAPI Inference API]
+    B --> C[MLflow Model Registry]
+    C --> D[Frozen A3 Model\nPreprocessing + XGBoost]
+    D --> E[0–100 Risk Score]
+    D --> F[Tree SHAP]
+    F --> G[Grouped Human-Readable Factors]
+
+    H[ASOS GraphReturns] --> I[Leakage Audit + Feature Governance]
+    I --> J[Training + Validation]
+    J --> K[Frozen Model Specification]
+    K --> C
+```
+
+## Model Development
+
+### 1. Leakage-safe baseline
+
+I started with logistic regression using only purchase-time customer and product attributes. The initial audit uncovered several target-derived features that would have made validation misleading, including customer/product return aggregates and return-code fields.
+
+**Baseline results:**
+
+| Model | ROC-AUC | Log Loss | Brier |
+|---|---:|---:|---:|
+| Prevalence baseline | 0.5000 | 0.6871 | 0.2470 |
+| Logistic Regression A | 0.6300 | 0.6608 | 0.2344 |
+| Logistic Regression B | 0.6381 | 0.6577 | 0.2328 |
+
+### 2. XGBoost + feature engineering
+
+The stronger model added:
+
+- price relative to product-type median
+- price relative to brand median
+- discount amount
+- artifact-safe customer missingness handling
+
+A frequency-enhanced challenger reached higher development AUC, but those frequency features could not be proven point-in-time safe because the dataset has no event timestamps. I therefore kept the more conservative model as the **model of record** rather than simply selecting the highest validation score.
+
+### 3. Explainability + model governance
+
+Tree SHAP was used for global and local model inspection. The final governance step checked:
+
+- target-derived leakage
+- raw identifier leakage
+- missing-customer artifacts
+- product-profile missingness
+- suspicious feature provenance
+- calibration behavior
+- deterministic feature manifests
+
+The result was a frozen **41-feature XGBoost A3** model with **659 boosting rounds** and no calibrator.
+
+## Final Held-Out Evaluation
+
+The frozen A3 model was evaluated once on the official ASOS test split after the model specification was locked.
+
+| Metric | Result |
+|---|---:|
+| ROC-AUC | **0.656798** |
+| PR-AUC | **0.682864** |
+| Log Loss | **0.648265** |
+| Brier Score | **0.228614** |
+| ECE | **0.009677** |
+| Calibration Slope | **1.0012** |
+
+Development-to-test ROC-AUC changed by only **0.0021**, indicating that overall discrimination remained consistent after freezing the model.
+
+### Cold-start and missing-data behavior
+
+| Test slice | ROC-AUC |
+|---|---:|
+| Known customer + known product | 0.6667 |
+| New customer + known product | 0.6635 |
+| Known customer + new product | 0.6399 |
+| New customer + new product | 0.6353 |
+| Product profile available | 0.6807 |
+| Product profile missing | 0.5893 |
+
+The largest operational weakness is missing product information, which is surfaced directly to users as a data-quality warning rather than hidden behind the score.
+
+Full methodology: [Final Test Evaluation](docs/final-test-evaluation.md)
+
+## MLOps / Reproducibility
+
+The model is not just saved as a local pickle. Stage 4 established a governed lifecycle around the frozen artifact:
+
+- MLflow Tracking with local SQLite metadata
+- registered model: `returnguard-a3`
+- alias: `model-of-record`
+- deterministic SHA256 dataset manifests
+- frozen model + feature-manifest hashes
+- pinned Python/package environment
+- reproducible training command
+- protected official-test evaluation path
+- synthetic CI checks that do not require the raw ASOS dataset
+
+Rebuild the frozen model:
 
 ```bash
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt -c constraints-stage5.txt
+.venv/bin/python scripts/reproduce_model.py --profile full
 ```
 
-The validated serving environment uses Python 3.9.6, XGBoost 2.1.4, SHAP
-0.47.2, FastAPI 0.128.8, and local MLflow; the constraint file makes the frozen lifecycle reproducible. The pickle files
-were created with pandas 1.x; a compatibility shim (`ml/data/compat.py`) handles
-loading them under pandas 2.x.
+The workflow verifies the training-data manifest, reconstructs the fixed split and preprocessing pipeline, retrains A3, checks reference predictions, logs the artifact to MLflow, and confirms that official test data was not accessed.
 
----
+More detail: [Stage 4 MLOps](docs/stage4-mlops.md)
 
-## How to Run the Audit
+## Inference API
 
-```bash
-python scripts/audit_dataset.py
+The FastAPI service loads the model once from:
+
+```text
+models:/returnguard-a3@model-of-record
 ```
 
-Loads all six raw files, computes structural statistics, and prints a full summary. Does not mutate any data.
+Endpoints:
 
----
-
-## How to Run the Stage 1 Baseline
-
-```bash
-python scripts/build_dataset.py    # join event/customer/product tables, compute splits
-python scripts/train_baseline.py   # train trivial baselines + LR-A + LR-B, write reports/
+```text
+GET  /health
+GET  /ready
+GET  /model
+POST /predict
+POST /predict/batch
+POST /explain
 ```
 
-Outputs land in `reports/`: metrics JSON and curated calibration plots are retained as portfolio evidence; fitted model pipelines are gitignored and regenerable. See [docs/stage1-baseline.md](docs/stage1-baseline.md) for full results and methodology.
-
----
-
-## How to Run the Stage 2 Ablation Ladder
-
-```bash
-python scripts/train_stage2.py     # requires Stage 1's build_dataset.py to have run first
-```
-
-~30–40 minutes (a 6-config hyperparameter grid dominates the runtime). Trains XGBoost through an ablation ladder (contaminated diagnostic → donor-imputed baseline → +derived features → +frequency features → tuning) on the Stage 1 customer-grouped development harness, plus a leakage probe that measures whether the customer missing-node artifact is exploitable. Metrics JSON and curated plots are retained; fitted binaries are gitignored and regenerable. See [docs/stage2-gbdt.md](docs/stage2-gbdt.md) for full results and methodology.
-
----
-
-## How to Run Tests
-
-```bash
-ruff check .
-pytest -m "not raw_training_data and not historical_test_data and not full_rebuild and not local_registry"
-```
-
-The full suite covers:
-- Stage 0: raw file presence, DataFrame types, required columns, binary target, schema consistency, known duplicate-column defects
-- Stage 1: leakage-safe feature schema, join correctness (row-count preservation, coverage rates), deterministic customer-grouped splitting, preprocessing (sentinel cleaning, unseen categories, missing-node handling), model behavior (probability validity, convergence), metrics (closed-form baseline checks, perfect-prediction fixtures), calibration binning, and cold-start slice evaluation
-- Stage 2: donor imputation (joint sampling, determinism, train-fold-only fitting), derived price features (hand-calculated formulas, train-only statistics, unseen-category fallback), frequency encoding (train-fold-only counts, NaN-vs-zero semantics, no customer-ID frequency feature), the leakage probe (synthetic detectability regression tests), the three-way early-stopping split (byte-identical primary_val to Stage 1, fold disjointness), and XGBoost pipeline behavior (probability validity, determinism, early stopping)
-- Stage 3: deterministic representative SHAP sampling and grouping, raw-margin additivity (including early-stopping tree-range alignment), explanation privacy contracts, feature governance, calibration diagnostics, and documented evaluation-history controls
-- Stage 5: FastAPI request validation, safe errors, vectorized inference, no-profile donor-routing controls, public explanation privacy, and an opt-in local-registry smoke test
-- Stage 6: Next.js synthetic-scenario frontend, API readiness state, cautious score/explanation presentation, CORS allowlisting, and data-free client tests
-
-Tests requiring real ASOS training data are marked `raw_training_data`; tests
-that inspect the historical test files are additionally marked
-`historical_test_data`. They are intentionally excluded from normal lifecycle
-and CI commands.
-
-## How to Run the Stage 5 API
-
-Stage 5 serves the local MLflow model-of-record only. Create it first with the
-governed Stage 4 rebuild/registration workflow, then explicitly assign the
-`model-of-record` alias as documented in [docs/stage4-mlops.md](docs/stage4-mlops.md).
-Normal API operation never loads training data or official test labels.
-
-```bash
-.venv/bin/uvicorn backend.main:app --reload
-```
-
-Swagger/OpenAPI is available at `http://127.0.0.1:8000/docs`. The primary
-endpoints are `GET /health`, `GET /ready`, `GET /model`, `POST /predict`,
-`POST /predict/batch`, and `POST /explain`.
+Example raw request:
 
 ```json
 {
-  "customer_context_key": "opaque-stable-token",
   "customer_profile": {
     "yearOfBirth": 1988,
     "isMale": false,
@@ -158,16 +190,105 @@ endpoints are `GET /health`, `GET /ready`, `GET /model`, `POST /predict`,
 }
 ```
 
-The response includes a deterministic 0–100 `risk_score`, data-quality
-context, safe model provenance, and the required methodology warning. It does
-not expose raw probabilities, SHAP values, feature names, or donor attributes.
-These are **dataset-conditional return-risk scores from a returner-enriched
-research sample, not merchant-wide calibrated return probabilities**. See
-[docs/stage5-api.md](docs/stage5-api.md) for the full contract.
+The service performs preprocessing inside the frozen artifact and returns the score, data-quality warnings, safe provenance, and optional grouped explanations. Raw SHAP values, donor-imputed demographics, filesystem paths, and internal feature names are never exposed publicly.
 
-## How to Run the Stage 6 Frontend
+Measured warm local latency:
 
-Start the Stage 5 API first, with an existing local model-of-record, then run:
+| Operation | p50 | p95 |
+|---|---:|---:|
+| Single prediction | 4.15 ms | 4.66 ms |
+| 100-row batch | 6.04 ms | 6.70 ms |
+| Explanation | 6.78 ms | 7.01 ms |
+
+More detail: [Stage 5 API](docs/stage5-api.md)
+
+## Frontend
+
+The Next.js frontend provides a single merchant scenario workflow:
+
+1. Enter customer and product information
+2. Analyze return risk
+3. View the `N / 100` score and data-quality warnings
+4. Optionally request **Why this score?**
+5. View grouped factors associated with higher/lower predicted risk
+
+The frontend also includes synthetic demo presets for complete, missing-customer, and incomplete-product scenarios.
+
+Design choices intentionally avoid probability-style wording, unsupported risk bands, and causal explanation language.
+
+More detail: [Stage 6 Frontend](docs/stage6-frontend.md)
+
+## Tech Stack
+
+**Machine Learning**
+
+`Python` · `pandas` · `NumPy` · `scikit-learn` · `XGBoost` · `SHAP`
+
+**MLOps**
+
+`MLflow` · `pytest` · `Ruff` · `GitHub Actions`
+
+**Backend**
+
+`FastAPI` · `Pydantic` · `Uvicorn`
+
+**Frontend**
+
+`Next.js` · `React` · `TypeScript` · `Tailwind CSS` · `Zod` · `React Hook Form` · `Vitest`
+
+## Key Engineering Decisions
+
+### Preventing leakage instead of chasing AUC
+
+The supplied dataset contains return/sales aggregates that leak outcome information. Product-side aggregates are even identical across train/test node files. These features were excluded instead of taking the artificially stronger performance.
+
+### Customer-grouped validation
+
+A large share of test purchases involve customers unseen during training. Validation therefore groups by customer rather than randomly splitting events, making the development setting closer to the cold-start behavior encountered in the official test set.
+
+### Missing-customer artifact defense
+
+Simple median/mode imputation made customer-node absence almost perfectly detectable by a leakage probe (**AUC 0.9866**). Joint donor imputation reduced detectability to approximately chance (**AUC 0.5248**), preventing the tree model from exploiting the preprocessing artifact.
+
+### Conservative model governance
+
+A higher-AUC challenger used product-frequency features, but the dataset has no timestamps to establish point-in-time correctness. Rather than silently accepting that uncertainty, the frequency-free A3 became the model of record and A4 remained experimental.
+
+## Dataset
+
+ReturnGuard uses the public **ASOS GraphReturns** research dataset:
+
+- 1,369,133 training purchase events
+- 1,460,366 test purchase events
+- customer-node attributes
+- product-node attributes
+
+The dataset contains only customers with at least one return, resulting in an approximately 55% return prevalence. Because that is not representative of a typical merchant customer population, ReturnGuard outputs should be interpreted as **relative risk signals**, not deployable probability estimates.
+
+Raw data is intentionally excluded from Git.
+
+## Run Locally
+
+### Backend / ML environment
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt -c constraints-stage5.txt
+```
+
+After creating the governed local MLflow model-of-record:
+
+```bash
+.venv/bin/uvicorn backend.main:app --reload
+```
+
+API docs:
+
+```text
+http://localhost:8000/docs
+```
+
+### Frontend
 
 ```bash
 cd frontend
@@ -176,148 +297,70 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Open `http://localhost:3000`. The frontend is intentionally a synthetic,
-single-event demonstrator: it calls the frozen API only and never accesses raw
-ASOS data, MLflow, batch inference, or official test evaluation. See
-[docs/stage6-frontend.md](docs/stage6-frontend.md) for its API/CORS contract,
-score interpretation, and verification commands.
+Open:
 
-To test an already-created local model-of-record explicitly:
-
-```bash
-.venv/bin/pytest tests/api/test_local_registry_integration.py -m local_registry -q
+```text
+http://localhost:3000
 ```
 
----
+## Testing
 
-## How to Rebuild the Frozen Model
-
-The normal lifecycle command verifies only the three official **training** raw
-files, recreates frozen A3, checks validation and reference predictions, saves
-a composite inference artifact to local MLflow, and never imports the official
-test evaluator:
+Backend / ML:
 
 ```bash
-.venv/bin/python scripts/reproduce_model.py --profile full
+ruff check .
+pytest -m "not raw_training_data and not historical_test_data and not full_rebuild and not local_registry"
 ```
 
-The first governed rebuild establishes the safe training-derived reference
-fixture once:
+Frontend:
 
 ```bash
-.venv/bin/python scripts/reproduce_model.py --profile full --bootstrap-reference --register
+cd frontend
+npm run lint
+npm run typecheck
+npm run test -- --run
+npm run build
 ```
 
-Model registration is separate from explicit model-of-record promotion. See
-[docs/stage4-mlops.md](docs/stage4-mlops.md).
-
----
-
-## How to Run Stage 3
-
-```bash
-.venv/bin/python scripts/run_stage3.py
-```
-
-This re-fits the frozen A3 and A4 development configurations solely because
-Stage 3 repairs the donor-imputation inference-order defect; it does not tune
-them. It never loads or evaluates official ASOS test model performance. The
-script produces reproducible development-only SHAP, calibration, missingness,
-and governance reports in `reports/`; fitted binaries are ignored because they
-are regenerable.
-
----
+GitHub Actions runs data-free Python and frontend checks without requiring ASOS files or local MLflow state.
 
 ## Repository Structure
 
-```
+```text
 ReturnGuard/
-├── data/
-│   ├── raw/          # Raw pickle files (gitignored)
-│   └── processed/    # Joined training frame + splits (gitignored, regenerable)
-├── docs/
-│   ├── dataset-audit.md      # Full dataset inspection report (Stage 0, corrected in Stage 1)
-│   ├── leakage-audit.md      # Feature-by-feature leakage classification
-│   ├── problem-definition.md # Formal problem statement
-│   ├── stage1-baseline.md    # Stage 1 methodology, results, and reasoning
-│   ├── stage2-gbdt.md        # Stage 2 methodology, results, and reasoning
-│   ├── stage3-methodology.md # Stage 3 methods, results, and decisions
-│   ├── stage5-api.md          # Stage 5 frozen-model serving contract
-│   ├── stage6-frontend.md     # Stage 6 Next.js consumer and integration contract
-│   ├── model-card.md         # Model-of-record constraints and intended use
-│   └── evaluation-history.md # Test-inspection and validation-use disclosure
-├── ml/
-│   ├── data/          # schema, loaders, joins, splits, pandas compat shim
-│   ├── features/      # preprocessing (LR + GBDT), donor imputation, derived/frequency features
-│   ├── explainability/ # deterministic sampling, Tree SHAP, explanation contracts
-│   ├── governance/    # feature manifest and frozen-model specification
-│   ├── models/        # trivial baselines, Logistic Regression, XGBoost
-│   └── evaluation/    # metrics, calibration, cold-start slicing, leakage probe
-├── artifacts/
-│   ├── manifests/     # Git-tracked data and frozen-model provenance
-│   └── reference/     # small training-derived prediction reference fixture
-├── notebooks/         # Exploratory notebooks (empty — logic lives in ml/ and scripts/)
-├── reports/           # Generated metrics/plots/models (gitignored, regenerable)
-├── backend/            # Stage 5 FastAPI request contracts and frozen A3 serving adapter
-├── frontend/           # Stage 6 Next.js frozen-model demonstrator
-├── scripts/
-│   ├── audit_dataset.py   # Stage 0 dataset audit script
-│   ├── build_dataset.py   # Stage 1 join + split builder
-│   ├── train_baseline.py  # Stage 1 training + evaluation
-│   ├── train_stage2.py    # Stage 2 ablation ladder + leakage probe
-│   └── run_stage3.py      # Stage 3 development-only analysis and governance
-├── tests/
-├── .gitignore
-├── README.md
-├── requirements.txt
-├── constraints-stage4.txt
-└── constraints-stage5.txt
+├── backend/       # FastAPI inference service
+├── frontend/      # Next.js merchant-facing UI
+├── ml/            # data, features, models, evaluation, explainability, governance
+├── scripts/       # audits, training, Stage 3 analysis, lifecycle workflows
+├── artifacts/     # versioned manifests + safe reference fixtures
+├── docs/          # methodology, model card, evaluation and stage docs
+├── reports/       # curated evaluation evidence
+└── tests/         # ML, governance, lifecycle and API tests
 ```
 
----
+## Limitations
 
-## Current Limitations
+ReturnGuard is a research/portfolio system, not a production merchant decision engine. Current limitations include:
 
-The one predeclared held-out evaluation of frozen A3 is complete. It confirms
-development-consistent overall performance within the ASOS dataset family, not
-merchant deployment readiness. A4 remains an experimental challenger. The
-project has no temporal validation, merchant-representative labels, or
-point-in-time product exposure data.
+- returner-enriched rather than merchant-representative data
+- no timestamps for true temporal validation
+- weaker performance when product information is unavailable
+- residual uncertainty for donor-imputed missing customer profiles
+- anonymized category values that do not directly map to a real merchant taxonomy
+- no merchant-specific calibration or business-loss thresholding
 
-Key findings that shape the model-of-record boundary:
+These limitations are intentionally surfaced in the model card, API, and frontend rather than hidden.
 
-- **Target leakage, confirmed and worse than first suspected**: product-side return/sales aggregates (`returnsPerProduct`, `productReturnRate`, `salesPerProduct`) are byte-identical between the training and test node files — the training file's aggregate already contains test-period outcomes. Customer-side aggregates (`returnsPerCustomer`, `customerReturnRate`, `salesPerCustomer`) are recomputed per split (same-window leakage). All are excluded; see [docs/leakage-audit.md](docs/leakage-audit.md).
-- **Target encoding evaluated and rejected**: without event timestamps, no fold construction can prove a target-encoding row precedes the row being scored — it would functionally reconstruct the banned `productReturnRate` under different bookkeeping. Fold-local, target-free frequency encoding was used instead.
-- **The customer missing-node artifact is confirmed exploitable by trees, and now suppressed**: a leakage probe shows median/mode imputation makes `has_customer_node` almost perfectly detectable (probe AUC 0.9866); joint donor (hot-deck) imputation reduces this to near-chance (0.5248). The artifact itself was worth only +0.003 AUC when exploited — far less than legitimate feature engineering gained (+0.013).
-- **Severe cold-start**: 71.9% of test events involve customers not seen during training. The primary validation split is customer-grouped specifically to measure this honestly, and the feature set uses no customer-history features so it works unchanged for new customers.
-- **No timestamps**: chronological validation cannot be reconstructed from the dataset alone; the customer-grouped split is the practical substitute. This also means the Stage 2 frequency features carry an unfalsifiable within-window-exposure assumption.
-- **Biased sample**: only customers with at least one return are included (~55% measured return rate vs. 20–40% typical for real e-commerce). No probability calibrator has been fit — deliberately, since fitting one now would calibrate to the wrong population.
-- **Partial anonymization**: `brandDesc`/`productType` each leak one real, un-anonymized value (`Pull&Bear`, `Jeans`).
+## Documentation
 
-See [docs/stage1-baseline.md](docs/stage1-baseline.md),
-[docs/stage2-gbdt.md](docs/stage2-gbdt.md), and
-[docs/stage3-methodology.md](docs/stage3-methodology.md) for full results.
-
----
-
-## Stage 3 Outcome
-
-**Stage 3 — Explainability, Governance, and Calibration Policy**
-
-Stage 2's hyperparameter tuning plateaued (best grid config beat the default by only +0.0007 AUC, inside the noise threshold) while feature engineering moved the needle substantially (+0.013 AUC from derived + frequency features) — evidence that remaining work was in model understanding and governance rather than model capacity. Stage 3:
-
-- verified Tree SHAP against the exact early-stopped scoring tree range;
-- confirmed A3 and A4 development reproductions after repairing batch/order-
-  dependent customer donor selection;
-- retained A3 as the conservative candidate because A4’s large frequency
-  contribution is temporally unverifiable without timestamps;
-- measured, but did not fit, calibration because the returner-enriched sample
-  cannot yield merchant-wide probabilities; and
-- did not itself compute official ASOS test model performance.
-
-The predeclared evaluation was subsequently executed on frozen A3 only. Its
-results are documented in [docs/final-test-evaluation.md](docs/final-test-evaluation.md);
-they do not reopen model selection, calibration fitting, feature engineering,
-or A4 comparison.
-
-The official test files were inspected during dataset auditing, including aggregate label statistics and structure. The one frozen-A3 performance evaluation is complete and cannot reopen fitting, model selection, calibration, or A4 comparison. Stage 2 selected configurations with its inner early-stop fold, while repeatedly calculating primary-validation metrics; those validation results are developmental rather than pristine confirmatory evidence. See [docs/evaluation-history.md](docs/evaluation-history.md) and [docs/model-card.md](docs/model-card.md).
+- [Dataset Audit](docs/dataset-audit.md)
+- [Leakage Audit](docs/leakage-audit.md)
+- [Stage 1 Baseline](docs/stage1-baseline.md)
+- [Stage 2 XGBoost](docs/stage2-gbdt.md)
+- [Stage 3 Explainability & Governance](docs/stage3-methodology.md)
+- [Final Test Evaluation](docs/final-test-evaluation.md)
+- [Stage 4 MLOps](docs/stage4-mlops.md)
+- [Stage 5 API](docs/stage5-api.md)
+- [Stage 6 Frontend](docs/stage6-frontend.md)
+- [Model Card](docs/model-card.md)
+- [Evaluation History](docs/evaluation-history.md)
